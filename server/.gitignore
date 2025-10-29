@@ -1,0 +1,57 @@
+# =====================================
+# Node.js + TypeScript Backend Gitignore
+# =====================================
+
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+out/
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+
+# Temporary / cache files
+tmp/
+temp/
+.cache/
+coverage/
+
+# PM2 / nodemon
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Optional: if you use uploads folder (for user profile images, etc.)
+uploads/
+
+# Optional: if using Docker
+docker-compose.override.yml
+.env.docker
