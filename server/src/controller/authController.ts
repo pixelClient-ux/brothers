@@ -67,9 +67,10 @@ if (!JWT_SECRET) {
 }
 
 export const signUp = catchAsync(async (req, res, next) => {
-  const { email, password, passwordConfirm } = req.body;
+  const { fullName, email, password, passwordConfirm } = req.body;
 
   const admin = await Admin.create({
+    fullName,
     email,
     password,
     passwordConfirm,

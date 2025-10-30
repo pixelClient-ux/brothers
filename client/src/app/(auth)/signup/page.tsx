@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 type SignupForm = {
+  fullname: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -54,6 +55,22 @@ export default function SignUpPage() {
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col items-start space-y-4"
         >
+          <Label className="flex w-full flex-col items-start">
+            FullName
+            <div className="focus-within:border-primary flex w-full items-center gap-2 border-b border-black">
+              <User className="text-gray-500" size={18} />
+              <Input
+                type="email"
+                {...register("fullname", { required: "fullname is required" })}
+                className="w-full rounded-none border-none bg-transparent px-2 py-2 shadow-none focus-visible:ring-0 focus-visible:outline-none"
+              />
+            </div>
+            {errors.fullname && (
+              <span className="text-sm text-red-500">
+                {errors.fullname.message}
+              </span>
+            )}
+          </Label>
           <Label className="flex w-full flex-col items-start">
             Email
             <div className="focus-within:border-primary flex w-full items-center gap-2 border-b border-black">

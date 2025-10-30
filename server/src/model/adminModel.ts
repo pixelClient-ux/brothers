@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 
 export interface IAdmin {
+  fullName: string;
   email: string;
   password: string;
   passwordConfirm?: string;
@@ -25,6 +26,11 @@ export interface IAdminDocument extends IAdmin, Document {
 
 const adminSchema = new Schema<IAdminDocument>(
   {
+    fullName: {
+      type: String,
+      required: [true, "Please provide your name"],
+      trim: true,
+    },
     email: {
       type: String,
       required: true,
