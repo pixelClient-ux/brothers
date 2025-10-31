@@ -204,7 +204,7 @@ export const protect = catchAsync(
       }
     }
 
-    (req as any).user = currentUser;
+    (req as any).admin = currentUser;
     next();
   }
 );

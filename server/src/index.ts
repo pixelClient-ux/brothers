@@ -4,6 +4,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { globalErrorHandler } from "./controller/errorController.js";
 import memberRouter from "./router/memberRouter.js";
+import adminRouter from "./router/adminRouter.js";
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.use(helmet());
 app.use(express.json());
 
 app.use("/api/v1/members", memberRouter);
+app.use("/api/v1/admin", adminRouter);
 
 app.all("/{*any}", (req, res, next) => {
   res.status(404).json({
