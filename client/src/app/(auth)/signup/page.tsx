@@ -34,7 +34,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="mx-auto flex h-[90vh] max-w-7xl items-center px-4 py-10 md:gap-10 lg:px-12">
+    <div className="mx-auto flex h-[90vh] w-full max-w-7xl items-center px-4 py-10 md:gap-10 lg:px-12">
       <div className="relative hidden aspect-16/12 w-full md:block">
         <Image
           src="/gym/gym.png"

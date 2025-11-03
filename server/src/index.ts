@@ -14,7 +14,7 @@ app.use(helmet());
 app.use(express.json());
 
 app.use("/api/v1/members", memberRouter);
-app.use("/api/v1/admin", adminRouter);
+app.use("/api/v1/admins", adminRouter);
 
 app.all("/{*any}", (req, res, next) => {
   res.status(404).json({

@@ -15,7 +15,6 @@ import Image from "next/image";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableFooter,
   TableHead,

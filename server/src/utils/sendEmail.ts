@@ -7,7 +7,7 @@ const sendEmail = async (options: {
   text?: string;
 }) => {
   const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
+    service: process.env.EMAIL_HOST,
     auth: {
       user: process.env.EMAIL_USERNAME,
       pass: process.env.EMAIL_PASSWORD,

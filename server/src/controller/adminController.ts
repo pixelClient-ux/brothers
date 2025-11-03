@@ -2,53 +2,86 @@ import Admin from "../model/adminModel.js";
 import { AppError } from "../utils/AppError.js";
 import { catchAsync } from "../utils/catchAsync.js";
 import sendEmail from "../utils/sendEmail.js";
-import { profileUpdatedTemplate } from "../utils/profileUpdatedTemplate.js";
 import { passwordChangedTemplate } from "../utils/passwordChangedTemplate .js";
+import { confirmEmailChangeTemplate } from "../utils/confirmEmailChangeTemplate.js";
+import crypto from "crypto";
 
 export const updateProfile = catchAsync(async (req, res, next) => {
   const { email, fullName } = req.body;
-  const userId = req.admin._id;
+  const adminId = req.admin._id;
+  const admin = await Admin.findById(adminId);
 
-  if (!email || !fullName) {
-    return res.status(400).json({
-      status: "fail",
-      message: "Full name and email are required",
-    });
+  if (!admin) {
+    return next(new AppError("Admin is not found", 404));
+  }
+  const adminEmail = admin.email;
+  if (fullName && fullName !== admin?.fullName) {
+    admin.fullName = fullName;
   }
 
-  const updatedAdmin = await Admin.findByIdAndUpdate(
-    userId,
-    { email, fullName },
-    { new: true, runValidators: true }
-  );
-
-  if (!updatedAdmin) {
-    return next(new AppError("Admin not found", 404));
-  }
-
-  try {
-    const emailHTML = profileUpdatedTemplate(updatedAdmin.fullName);
+  if (email && email !== adminEmail) {
+    const token = admin.generateEmailChangeToken(email);
+    await admin.save({ validateBeforeSave: false });
+    const confirmUrl = `${req.protocol}://${req.get(
+      "host"
+    )}/api/v1/admins/confirm-email/${token}`;
+    const emailHTML = confirmEmailChangeTemplate(
+      confirmUrl,
+      admin.fullName,
+      email
+    );
     await sendEmail({
-      email: updatedAdmin.email,
-      subject: "Your profile has been updated",
+      email: adminEmail,
+      subject: "Confirm your new email address",
       html: emailHTML,
     });
-  } catch (err) {
-    console.error("Failed to send profile update email:", err);
-    return next(new AppError("Failed to send profile update email", 500));
+    return res.status(200).json({
+      status: "success",
+      message:
+        "A confirmation email has been sent to your new address. Please verify to complete the change.",
+    });
   }
+  await admin.save();
 
   res.status(200).json({
     status: "success",
-    data: {
-      admin: updatedAdmin,
-    },
+    message: "your fullName is updated successfully",
+  });
+});
+
+export const confirmEmailChange = catchAsync(async (req, res, next) => {
+  const { token } = req.params;
+  if (!token) {
+    return next(new AppError("Somethin went wrong ,please try again", 400));
+  }
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+  const admin = await Admin.findOne({
+    emailConfirmToken: hashedToken,
+    emailConfirmExpires: { $gt: Date.now() },
+  });
+
+  if (!admin) {
+    return next(
+      new AppError("Invalid or expired email confirmation token", 400)
+    );
+  }
+
+  admin.email = admin.pendingEmail!;
+  (admin as any).pendingEmail = undefined;
+  (admin as any).emailChangeToken = undefined;
+  (admin as any).emailChangeTokenExpires = undefined;
+
+  await admin.save({ validateBeforeSave: false });
+
+  res.status(200).json({
+    status: "success",
+    message: "Email successfully updated!",
   });
 });
 
 export const updatePassword = catchAsync(async (req, res, next) => {
   const { currentPassword, newPassword, confirmPassword } = req.body;
-  const userId = req.admin._id;
+  const adminId = req.admin._id;
 
   if (!currentPassword || !newPassword || !confirmPassword) {
     return next(new AppError("All password fields are required", 400));
@@ -60,7 +93,7 @@ export const updatePassword = catchAsync(async (req, res, next) => {
     );
   }
 
-  const admin = await Admin.findById(userId).select("+password");
+  const admin = await Admin.findById(adminId).select("+password");
 
   if (!admin) {
     return next(new AppError("Admin not found", 404));

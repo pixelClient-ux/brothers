@@ -11,7 +11,7 @@ export const connectDb = async () => {
     console.log("somthing wrong");
     return;
   }
-  const MONGO_DB_URL = url?.replace("<password>", Password);
+  const MONGO_DB_URL = url?.replace("<db_password>", Password);
   try {
     const db = await mongoose.connect(MONGO_DB_URL);
     console.log(`✅ MongoDB connected: ${db.connection.host}`);

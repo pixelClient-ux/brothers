@@ -36,7 +36,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import HeroSkeleton from "@/components/HeroLoadingskeleton";
 import { differenceInMonths } from "date-fns";
 
-type MemberPayload = {
+export type MemberPayload = {
   fullName: string;
   phone: string;
   gender: "male" | "female" | "other";

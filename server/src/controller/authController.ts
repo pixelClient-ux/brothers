@@ -7,6 +7,10 @@ import sendEmail from "../utils/sendEmail.js";
 import crypto from "crypto";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import { Document, Types } from "mongoose";
+import { welcomeEmailTemplate } from "../utils/welcomeTemplateEmail.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 interface DecodedToken extends JwtPayload {
   id: string;
   iat: number;
@@ -25,7 +29,7 @@ const signToken = (id: Types.ObjectId) => {
     { id },
     JWT_SECRET as string,
     {
-      expiresIn: process.env.JWT_EXPIRES_IN as string,
+      expiresIn: process.env.JWT_EXPIRES_IN,
     } as jwt.SignOptions
   );
 };
@@ -40,7 +44,7 @@ const createSendToken = (
   const cookieOptions = {
     expires: new Date(
       Date.now() +
-        parseInt(process.env.JWT_COOKIE_EXPIRES_IN as string) *
+        parseInt(process.env.JWT_COOKIES_EXPIRES_IN as string) *
           24 *
           60 *
           60 *
@@ -76,7 +80,12 @@ export const signUp = catchAsync(async (req, res, next) => {
     passwordConfirm,
   });
 
-  createSendToken(admin, 201, res, "Account created successfully!");
+  await createSendToken(admin, 201, res, "Account created successfully!");
+  await sendEmail({
+    email: admin.email,
+    subject: "🎉 Welcome to GYM Fitness!",
+    html: welcomeEmailTemplate(admin.fullName, "GYM Fitness"),
+  });
 });
 
 export const login = catchAsync(async (req, res, next) => {
@@ -140,9 +149,14 @@ export const forgetPassword = catchAsync(async (req, res, next) => {
 });
 
 export const resetPassword = catchAsync(async (req, res, next) => {
-  const { password, passwordConfirm } = req.body;
+  const { token } = req.params;
 
-  const hashedToken = crypto.createHash("sha256").digest("hex");
+  const { password, passwordConfirm } = req.body;
+  if (!token) {
+    return next(new AppError("Somethin went wrong,please try again", 400));
+  }
+
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
   const admin = await Admin.findOne({
     passwordResetToken: hashedToken,

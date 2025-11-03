@@ -9,10 +9,12 @@ export interface IAdmin {
   passwordConfirm?: string;
   avatar?: string;
   role?: string;
-  isActive?: boolean;
   passwordChangedAt: Date;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
+  emailChangeToken?: string;
+  emailChangeTokenExpires?: Date;
+  pendingEmail?: string;
 }
 
 export interface IAdminDocument extends IAdmin, Document {
@@ -22,6 +24,7 @@ export interface IAdminDocument extends IAdmin, Document {
     userPassword: string
   ): Promise<boolean>;
   createPasswordResetToken(): string;
+  generateEmailChangeToken(newEmail: string): string;
 }
 
 const adminSchema = new Schema<IAdminDocument>(
@@ -51,10 +54,12 @@ const adminSchema = new Schema<IAdminDocument>(
     },
     avatar: { type: String, default: "/images/admin.png" },
     role: { type: String, default: "admin" },
-    isActive: { type: Boolean, default: true },
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetExpires: Date,
+    emailChangeToken: String,
+    pendingEmail: String,
+    emailChangeTokenExpires: Date,
   },
   { timestamps: true }
 );
@@ -86,6 +91,18 @@ adminSchema.methods.createPasswordResetToken = function () {
     .digest("hex");
   this.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);
   return resetToken;
+};
+adminSchema.methods.generateEmailChangeToken = function (newEmail: string) {
+  const token = crypto.randomBytes(32).toString("hex");
+
+  this.pendingEmail = newEmail;
+  this.emailChangeToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+  this.emailChangeTokenExpires = Date.now() + 10 * 60 * 1000;
+
+  return token;
 };
 
 const Admin: Model<IAdminDocument> = model<IAdminDocument>(
