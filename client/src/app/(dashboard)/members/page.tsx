@@ -22,13 +22,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PaginationBar } from "@/components/PaginationBar";
+import MemberCard from "@/components/memeberCard";
 
 export default function Member() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [allSelected, setAllSelected] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<any>(null); // Member clicked
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const filterRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+
+  const handleMemberClick = (member: (typeof invoices)[0]) => {
+    setSelectedMember(member); // <-- store the clicked member
+    setIsModalOpen(true); // <-- open modal
+  };
 
   const toggleAll = () => {
     if (allSelected) {
@@ -517,7 +525,10 @@ export default function Member() {
                 const latestPayment =
                   member.payments[member.payments.length - 1];
                 return (
-                  <TableRow key={member.phone}>
+                  <TableRow
+                    key={member.phone}
+                    onClick={() => handleMemberClick(member)}
+                  >
                     <TableCell>
                       <Checkbox
                         checked={selectedMembers.includes(member.phone)}
@@ -582,6 +593,11 @@ export default function Member() {
           </div>
         </div>
       </div>
+      <MemberCard
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        selectedMember={selectedMember}
+      />
     </div>
   );
 }

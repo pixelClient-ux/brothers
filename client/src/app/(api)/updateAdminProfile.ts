@@ -6,7 +6,7 @@ export const updateAdminProfile = async (updatedData: updatedDataType) => {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/admins/update-profile`,
     {
-      method: "POST",
+      method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
