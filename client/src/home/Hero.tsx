@@ -26,12 +26,6 @@ import {
 import Image from "next/image";
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import HeroSkeleton from "@/components/HeroLoadingskeleton";
 import { differenceInMonths } from "date-fns";
@@ -46,11 +40,7 @@ export type MemberPayload = {
     date: Date;
     method: "cash" | "cbe" | "tele-birr" | "transfer";
   }[];
-  membership?: {
-    startDate?: Date;
-    endDate?: Date;
-    durationMonths?: number;
-  };
+  membershipPeriod: string;
 };
 
 export default function Hero() {
@@ -64,8 +54,8 @@ export default function Hero() {
     avatar?: FileList;
     paymentAmount?: number;
     paymentMethod?: "cash" | "cbe" | "tele-birr" | "transfer";
-    membershipStart?: Date;
-    membershipEnd?: Date;
+
+    membershipPeriod: string;
   };
 
   const {
@@ -81,8 +71,7 @@ export default function Hero() {
       paymentAmount: undefined,
       paymentMethod: undefined,
       gender: undefined,
-      membershipStart: undefined,
-      membershipEnd: undefined,
+      membershipPeriod: "1",
     },
   });
 
@@ -92,20 +81,6 @@ export default function Hero() {
   };
 
   const onSubmit = (data: FormValues) => {
-    if (
-      data.membershipStart &&
-      data.membershipEnd &&
-      data.membershipEnd < data.membershipStart
-    ) {
-      alert("Membership end date must be after start date");
-      return;
-    }
-
-    const durationMonths =
-      data.membershipStart && data.membershipEnd
-        ? differenceInMonths(data.membershipEnd, data.membershipStart)
-        : undefined;
-
     const memberPayload: MemberPayload = {
       fullName: data.fullName!,
       phone: data.phone!,
@@ -118,11 +93,7 @@ export default function Hero() {
           method: data.paymentMethod!,
         },
       ],
-      membership: {
-        startDate: data.membershipStart,
-        endDate: data.membershipEnd,
-        durationMonths,
-      },
+      membershipPeriod: data.membershipPeriod,
     };
 
     console.log("Payload sent to backend:", memberPayload);
@@ -422,76 +393,34 @@ export default function Hero() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2 text-white">
-                        <Label>Membership Start</Label>
-                        <Controller
-                          control={control}
-                          name="membershipStart"
-                          rules={{ required: "Select membership start" }}
-                          render={({ field }) => (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className="w-full rounded-none text-left text-black"
-                                >
-                                  {field.value
-                                    ? (field.value as Date).toLocaleDateString()
-                                    : "Select Start Date"}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                  mode="single"
-                                  selected={field.value}
-                                  onSelect={field.onChange}
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          )}
-                        />
-                        {errors.membershipStart && (
-                          <p className="mt-1 text-sm text-red-400">
-                            {errors.membershipStart.message}
-                          </p>
+                    <div className="space-y-2 text-white">
+                      <Label>Membership Duration</Label>
+                      <Controller
+                        control={control}
+                        name="membershipPeriod"
+                        rules={{ required: "Select membership period" }}
+                        render={({ field }) => (
+                          <Select
+                            onValueChange={(v) => field.onChange(Number(v))}
+                            value={field.value}
+                          >
+                            <SelectTrigger className="rounded-none">
+                              <SelectValue placeholder="Select Duration" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-none">
+                              <SelectItem value="1">1 Month</SelectItem>
+                              <SelectItem value="3">3 Months</SelectItem>
+                              <SelectItem value="6">6 Months</SelectItem>
+                              <SelectItem value="12">12 Months</SelectItem>
+                            </SelectContent>
+                          </Select>
                         )}
-                      </div>
-
-                      <div className="space-y-2 text-white">
-                        <Label>Membership End</Label>
-                        <Controller
-                          control={control}
-                          name="membershipEnd"
-                          rules={{ required: "Select membership end" }}
-                          render={({ field }) => (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className="w-full rounded-none text-left text-black"
-                                >
-                                  {field.value
-                                    ? (field.value as Date).toLocaleDateString()
-                                    : "Select End Date"}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                  mode="single"
-                                  selected={field.value}
-                                  onSelect={field.onChange}
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          )}
-                        />
-                        {errors.membershipEnd && (
-                          <p className="mt-1 text-sm text-red-400">
-                            {errors.membershipEnd.message}
-                          </p>
-                        )}
-                      </div>
+                      />
+                      {errors.membershipPeriod && (
+                        <p className="mt-1 text-sm text-red-400">
+                          {errors.membershipPeriod.message}
+                        </p>
+                      )}
                     </div>
 
                     <Button

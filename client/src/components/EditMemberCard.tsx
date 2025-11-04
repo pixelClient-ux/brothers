@@ -10,34 +10,18 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-
-interface Member {
-  id?: string;
-  fullName?: string;
-  phone?: string;
-  gender?: string;
-  amount?: string;
-  cash?: string;
-  isActive?: boolean;
-}
+import { MemberDataType } from "@/app/(api)/createMember";
 
 interface MemberCardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedMember: Member | null;
+  selectedMember: MemberDataType | null;
 }
 
-export default function MemberCard({
+export default function EditMemberCard({
   open,
   onOpenChange,
   selectedMember,
@@ -46,26 +30,25 @@ export default function MemberCard({
     register,
     handleSubmit,
     reset,
-    setValue,
     control,
     formState: { errors },
-  } = useForm<Member>({
-    defaultValues: {
-      fullName: "",
-      phone: "",
-      gender: "",
-      amount: "",
-      cash: "",
-      isActive: false,
-    },
-  });
+  } = useForm<MemberDataType>();
 
   useEffect(() => {
-    if (selectedMember) reset(selectedMember);
+    if (selectedMember) {
+      const memberForForm: MemberDataType = {
+        ...selectedMember,
+        payments:
+          selectedMember.payments && selectedMember.payments.length > 0
+            ? selectedMember.payments
+            : [{ amount: 0, date: new Date(), method: "cash" }],
+      };
+      reset(memberForForm);
+    }
   }, [selectedMember, reset]);
 
-  const onSubmit = (data: Member) => {
-    console.log(data);
+  const onSubmit = (data: MemberDataType) => {
+    console.log("Updated member:", data);
     onOpenChange(false);
   };
 
@@ -79,7 +62,7 @@ export default function MemberCard({
         {selectedMember ? (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Full Name */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
               <Input
                 id="fullName"
@@ -97,7 +80,7 @@ export default function MemberCard({
             </div>
 
             {/* Phone */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
               <Input
                 id="phone"
@@ -116,7 +99,7 @@ export default function MemberCard({
             </div>
 
             {/* Gender */}
-            <div className="space-y-3 text-white">
+            <div className="space-y-2 text-white">
               <Label>Gender</Label>
               <Controller
                 control={control}
@@ -146,57 +129,49 @@ export default function MemberCard({
               )}
             </div>
 
-            <div className="space-y-3">
-              <Label htmlFor="amount">Amount</Label>
+            {/* Latest Payment Amount */}
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount (ETB)</Label>
               <Input
                 id="amount"
                 type="number"
-                {...register("amount", {
+                {...register("payments.0.amount", {
                   required: "Amount is required",
                   min: { value: 0, message: "Amount must be positive" },
                 })}
                 className="rounded-none bg-gray-800 text-white"
               />
-              {errors.amount && (
-                <p className="text-sm text-red-500">{errors.amount.message}</p>
+              {errors.payments?.[0]?.amount && (
+                <p className="text-sm text-red-500">
+                  {errors.payments[0].amount.message}
+                </p>
               )}
             </div>
 
-            {/* Cash */}
-            <div className="space-y-3">
-              <Label htmlFor="cash">Paymenth Method</Label>
-              <Input
-                id="cash"
-                type="number"
-                {...register("cash", {
-                  required: "Cash amount is required",
-                  min: { value: 0, message: "Cash must be positive" },
-                })}
-                className="rounded-none bg-gray-800 text-white"
+            {/* Latest Payment Method */}
+            <div className="space-y-2">
+              <Label htmlFor="method">Payment Method</Label>
+              <Controller
+                control={control}
+                name="payments.0.method"
+                rules={{ required: "Payment method is required" }}
+                render={({ field }) => (
+                  <select
+                    {...field}
+                    className="w-full rounded-none bg-gray-800 px-3 py-2 text-white"
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="cbe">CBE</option>
+                    <option value="tele-birr">Tele-birr</option>
+                    <option value="transfer">Transfer</option>
+                  </select>
+                )}
               />
-              {errors.cash && (
-                <p className="text-sm text-red-500">{errors.cash.message}</p>
+              {errors.payments?.[0]?.method && (
+                <p className="text-sm text-red-500">
+                  {errors.payments[0].method.message}
+                </p>
               )}
-            </div>
-
-            <div>
-              <div className="space-y-3">
-                <Label htmlFor="isActive">Status</Label>
-                <Select
-                  onValueChange={(value) =>
-                    setValue("isActive", value === "true")
-                  }
-                  defaultValue={selectedMember?.isActive ? "true" : "false"}
-                >
-                  <SelectTrigger className="w-full rounded-none border border-gray-700 bg-gray-800 text-white">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">Active</SelectItem>
-                    <SelectItem value="false">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
             <DialogFooter className="flex justify-end gap-2 pt-3">

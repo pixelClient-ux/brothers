@@ -9,7 +9,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { File, FileUp, Search, Trash } from "lucide-react";
+import {
+  FileUp,
+  MoreVertical,
+  Pencil,
+  RotateCwIcon,
+  Search,
+  Trash,
+  Trash2,
+} from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 import {
@@ -21,22 +29,45 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import { PaginationBar } from "@/components/PaginationBar";
-import MemberCard from "@/components/memeberCard";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MemberDataType } from "@/app/(api)/createMember";
+import EditMemberCard from "@/components/EditMemberCard";
+import DeleteMember from "@/components/DeleteMember";
+import RenewMembership, {
+  MembershipRenewProps,
+} from "@/components/RenewMember";
+interface deleteProps {
+  id: string;
+  name: string;
+}
 
 export default function Member() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [allSelected, setAllSelected] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<any>(null); // Member clicked
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const filterRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+  const [selectedMember, setSelectedMember] = useState<MemberDataType | null>(
+    null,
+  );
+  const [renewOpen, setRenewOpen] = useState(false);
+  const [renewMember, setRenewMember] = useState<MembershipRenewProps | null>(
+    null,
+  );
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string>("");
+  const [name, setName] = useState("");
 
-  const handleMemberClick = (member: (typeof invoices)[0]) => {
-    setSelectedMember(member); // <-- store the clicked member
-    setIsModalOpen(true); // <-- open modal
-  };
+  const filterRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
   const toggleAll = () => {
     if (allSelected) {
@@ -69,18 +100,51 @@ export default function Member() {
 
   const invoices = [
     {
-      fullName: "Abebe Bekele",
-      phone: "0912345678",
+      _id: "648f1a1a1a1a1a1a1a1a011",
+      fullName: "Bekele Teshome",
+      phone: "0912345688",
+      gender: "male",
+      role: "member",
+      avatar: "/gym/profile.png",
+      isActive: false,
+      payments: [
+        { amount: 300, date: "2025-05-01T00:00:00.000Z", method: "transfer" },
+      ],
+      membership: {
+        startDate: "2025-05-01T00:00:00.000Z",
+        endDate: "2025-07-31T00:00:00.000Z",
+        durationMonths: 3,
+        status: "expired",
+      },
+    },
+    {
+      _id: "648f1a1a1a1a1a1a1a1a012",
+      fullName: "Selamawit Tsegaye",
+      phone: "0912345689",
+      gender: "female",
+      role: "member",
+      avatar: "/gym/profile.png",
+      isActive: true,
+      payments: [
+        { amount: 450, date: "2025-06-05T00:00:00.000Z", method: "cash" },
+      ],
+      membership: {
+        startDate: "2025-06-01T00:00:00.000Z",
+        endDate: "2025-08-31T00:00:00.000Z",
+        durationMonths: 3,
+        status: "active",
+      },
+    },
+    {
+      _id: "648f1a1a1a1a1a1a1a1a013",
+      fullName: "Kebede Alemayehu",
+      phone: "0912345690",
       gender: "male",
       role: "member",
       avatar: "/gym/profile.png",
       isActive: true,
       payments: [
-        {
-          amount: 1200,
-          date: "2025-01-05T00:00:00.000Z",
-          method: "cash",
-        },
+        { amount: 1200, date: "2025-01-05T00:00:00.000Z", method: "cbe" },
       ],
       membership: {
         startDate: "2025-01-01T00:00:00.000Z",
@@ -90,18 +154,33 @@ export default function Member() {
       },
     },
     {
-      fullName: "Lily Tadesse",
-      phone: "0912345679",
+      _id: "648f1a1a1a1a1a1a1a1a014",
+      fullName: "Almaz Hailu",
+      phone: "0912345691",
+      gender: "female",
+      role: "member",
+      avatar: "/gym/profile.png",
+      isActive: false,
+      payments: [
+        { amount: 600, date: "2025-02-10T00:00:00.000Z", method: "tele-birr" },
+      ],
+      membership: {
+        startDate: "2025-02-01T00:00:00.000Z",
+        endDate: "2025-07-31T00:00:00.000Z",
+        durationMonths: 6,
+        status: "expired",
+      },
+    },
+    {
+      _id: "648f1a1a1a1a1a1a1a1a015",
+      fullName: "Mekdes Wondimu",
+      phone: "0912345692",
       gender: "female",
       role: "member",
       avatar: "/gym/profile.png",
       isActive: true,
       payments: [
-        {
-          amount: 600,
-          date: "2025-03-10T00:00:00.000Z",
-          method: "cbe",
-        },
+        { amount: 900, date: "2025-03-15T00:00:00.000Z", method: "transfer" },
       ],
       membership: {
         startDate: "2025-03-01T00:00:00.000Z",
@@ -111,123 +190,69 @@ export default function Member() {
       },
     },
     {
-      fullName: "Daniel Mekonnen",
-      phone: "0912345680",
+      _id: "648f1a1a1a1a1a1a1a1a016",
+      fullName: "Hailemariam Girma",
+      phone: "0912345693",
       gender: "male",
-      role: "member",
-      avatar: "/gym/profile.png",
-      isActive: false,
-      payments: [
-        {
-          amount: 300,
-          date: "2025-02-15T00:00:00.000Z",
-          method: "tele-birr",
-        },
-      ],
-      membership: {
-        startDate: "2025-02-01T00:00:00.000Z",
-        endDate: "2025-04-30T00:00:00.000Z",
-        durationMonths: 3,
-        status: "expired",
-      },
-    },
-    {
-      fullName: "Sara Yohannes",
-      phone: "0912345681",
-      gender: "female",
       role: "member",
       avatar: "/gym/profile.png",
       isActive: true,
       payments: [
-        {
-          amount: 900,
-          date: "2025-05-05T00:00:00.000Z",
-          method: "transfer",
-        },
-      ],
-      membership: {
-        startDate: "2025-05-01T00:00:00.000Z",
-        endDate: "2025-10-31T00:00:00.000Z",
-        durationMonths: 6,
-        status: "active",
-      },
-    },
-    {
-      fullName: "Mulugeta Alemu",
-      phone: "0912345682",
-      gender: "male",
-      role: "member",
-      avatar: "/gym/profile.png",
-      isActive: false,
-      payments: [
-        {
-          amount: 1200,
-          date: "2025-01-20T00:00:00.000Z",
-          method: "cbe",
-        },
+        { amount: 1200, date: "2025-01-20T00:00:00.000Z", method: "cash" },
       ],
       membership: {
         startDate: "2025-01-01T00:00:00.000Z",
         endDate: "2025-12-31T00:00:00.000Z",
         durationMonths: 12,
-        status: "expired",
-      },
-    },
-    {
-      fullName: "Helen Gebre",
-      phone: "0912345683",
-      gender: "female",
-      role: "member",
-      avatar: "/gym/profile.png",
-      isActive: true,
-      payments: [
-        {
-          amount: 450,
-          date: "2025-04-10T00:00:00.000Z",
-          method: "cash",
-        },
-      ],
-      membership: {
-        startDate: "2025-04-01T00:00:00.000Z",
-        endDate: "2025-06-30T00:00:00.000Z",
-        durationMonths: 3,
         status: "active",
       },
     },
     {
-      fullName: "Tadesse Woldemariam",
-      phone: "0912345684",
-      gender: "male",
-      role: "member",
-      avatar: "/gym/profile.png",
-      isActive: true,
-      payments: [
-        {
-          amount: 600,
-          date: "2025-06-05T00:00:00.000Z",
-          method: "transfer",
-        },
-      ],
-      membership: {
-        startDate: "2025-06-01T00:00:00.000Z",
-        endDate: "2025-11-30T00:00:00.000Z",
-        durationMonths: 6,
-        status: "active",
-      },
-    },
-    {
-      fullName: "Mariam Fikadu",
-      phone: "0912345685",
+      _id: "648f1a1a1a1a1a1a1a1a017",
+      fullName: "Betelhem Asfaw",
+      phone: "0912345694",
       gender: "female",
       role: "member",
       avatar: "/gym/profile.png",
       isActive: false,
       payments: [
-        {
-          amount: 300,
-          date: "2025-01-15T00:00:00.000Z",
-          method: "cbe",
-        },
+        { amount: 300, date: "2025-04-01T00:00:00.000Z", method: "cbe" },
+      ],
+      membership: {
+        startDate: "2025-04-01T00:00:00.000Z",
+        endDate: "2025-06-30T00:00:00.000Z",
+        durationMonths: 3,
+        status: "expired",
+      },
+    },
+    {
+      _id: "648f1a1a1a1a1a1a1a1a018",
+      fullName: "Abebech Fikadu",
+      phone: "0912345695",
+      gender: "female",
+      role: "member",
+      avatar: "/gym/profile.png",
+      isActive: true,
+      payments: [
+        { amount: 750, date: "2025-02-20T00:00:00.000Z", method: "cash" },
+      ],
+      membership: {
+        startDate: "2025-02-01T00:00:00.000Z",
+        endDate: "2025-07-31T00:00:00.000Z",
+        durationMonths: 6,
+        status: "active",
+      },
+    },
+    {
+      _id: "648f1a1a1a1a1a1a1a1a019",
+      fullName: "Tigist Alemu",
+      phone: "0912345696",
+      gender: "female",
+      role: "member",
+      avatar: "/gym/profile.png",
+      isActive: false,
+      payments: [
+        { amount: 400, date: "2025-01-10T00:00:00.000Z", method: "cbe" },
       ],
       membership: {
         startDate: "2025-01-01T00:00:00.000Z",
@@ -237,195 +262,160 @@ export default function Member() {
       },
     },
     {
-      fullName: "Samuel Desta",
-      phone: "0912345686",
+      _id: "648f1a1a1a1a1a1a1a1a020",
+      fullName: "Yonas Tadesse",
+      phone: "0912345697",
       gender: "male",
       role: "member",
       avatar: "/gym/profile.png",
       isActive: true,
       payments: [
-        {
-          amount: 1200,
-          date: "2025-02-01T00:00:00.000Z",
-          method: "cash",
-        },
-      ],
-      membership: {
-        startDate: "2025-02-01T00:00:00.000Z",
-        endDate: "2025-12-31T00:00:00.000Z",
-        durationMonths: 12,
-        status: "active",
-      },
-    },
-    {
-      fullName: "Fatuma Ahmed",
-      phone: "0912345687",
-      gender: "female",
-      role: "member",
-      avatar: "/gym/profile.png",
-      isActive: true,
-      payments: [
-        {
-          amount: 600,
-          date: "2025-03-01T00:00:00.000Z",
-          method: "tele-birr",
-        },
+        { amount: 1100, date: "2025-03-05T00:00:00.000Z", method: "transfer" },
       ],
       membership: {
         startDate: "2025-03-01T00:00:00.000Z",
-        endDate: "2025-08-31T00:00:00.000Z",
-        durationMonths: 6,
-        status: "active",
-      },
-    },
-    {
-      fullName: "Bekele Teshome",
-      phone: "0912345688",
-      gender: "male",
-      role: "member",
-      avatar: "/gym/profile.png",
-      isActive: false,
-      payments: [
-        {
-          amount: 300,
-          date: "2025-05-01T00:00:00.000Z",
-          method: "transfer",
-        },
-      ],
-      membership: {
-        startDate: "2025-05-01T00:00:00.000Z",
-        endDate: "2025-07-31T00:00:00.000Z",
-        durationMonths: 3,
-        status: "expired",
-      },
-    },
-    {
-      fullName: "Selamawit Tsegaye",
-      phone: "0912345689",
-      gender: "female",
-      role: "member",
-      avatar: "/gym/profile.png",
-      isActive: true,
-      payments: [
-        {
-          amount: 450,
-          date: "2025-06-05T00:00:00.000Z",
-          method: "cash",
-        },
-      ],
-      membership: {
-        startDate: "2025-06-01T00:00:00.000Z",
-        endDate: "2025-08-31T00:00:00.000Z",
-        durationMonths: 3,
-        status: "active",
-      },
-    },
-    {
-      fullName: "Kebede Alemayehu",
-      phone: "0912345690",
-      gender: "male",
-      role: "member",
-      avatar: "/gym/profile.png",
-      isActive: true,
-      payments: [
-        {
-          amount: 1200,
-          date: "2025-01-05T00:00:00.000Z",
-          method: "cbe",
-        },
-      ],
-      membership: {
-        startDate: "2025-01-01T00:00:00.000Z",
         endDate: "2025-12-31T00:00:00.000Z",
-        durationMonths: 12,
+        durationMonths: 10,
         status: "active",
       },
     },
     {
-      fullName: "Almaz Hailu",
-      phone: "0912345691",
-      gender: "female",
-      role: "member",
-      avatar: "/gym/profile.png",
-      isActive: false,
-      payments: [
-        {
-          amount: 600,
-          date: "2025-02-10T00:00:00.000Z",
-          method: "tele-birr",
-        },
-      ],
-      membership: {
-        startDate: "2025-02-01T00:00:00.000Z",
-        endDate: "2025-07-31T00:00:00.000Z",
-        durationMonths: 6,
-        status: "expired",
-      },
-    },
-    {
-      fullName: "Mekdes Wondimu",
-      phone: "0912345692",
+      _id: "648f1a1a1a1a1a1a1a1a021",
+      fullName: "Helen Tsegaye",
+      phone: "0912345698",
       gender: "female",
       role: "member",
       avatar: "/gym/profile.png",
       isActive: true,
       payments: [
-        {
-          amount: 900,
-          date: "2025-03-15T00:00:00.000Z",
-          method: "transfer",
-        },
-      ],
-      membership: {
-        startDate: "2025-03-01T00:00:00.000Z",
-        endDate: "2025-08-31T00:00:00.000Z",
-        durationMonths: 6,
-        status: "active",
-      },
-    },
-    {
-      fullName: "Hailemariam Girma",
-      phone: "0912345693",
-      gender: "male",
-      role: "member",
-      avatar: "/gym/profile.png",
-      isActive: true,
-      payments: [
-        {
-          amount: 1200,
-          date: "2025-01-20T00:00:00.000Z",
-          method: "cash",
-        },
-      ],
-      membership: {
-        startDate: "2025-01-01T00:00:00.000Z",
-        endDate: "2025-12-31T00:00:00.000Z",
-        durationMonths: 12,
-        status: "active",
-      },
-    },
-    {
-      fullName: "Betelhem Asfaw",
-      phone: "0912345694",
-      gender: "female",
-      role: "member",
-      avatar: "/gym/profile.png",
-      isActive: false,
-      payments: [
-        {
-          amount: 300,
-          date: "2025-04-01T00:00:00.000Z",
-          method: "cbe",
-        },
+        { amount: 500, date: "2025-04-15T00:00:00.000Z", method: "cash" },
       ],
       membership: {
         startDate: "2025-04-01T00:00:00.000Z",
         endDate: "2025-06-30T00:00:00.000Z",
         durationMonths: 3,
+        status: "active",
+      },
+    },
+    {
+      _id: "648f1a1a1a1a1a1a1a1a022",
+      fullName: "Dawit Bekele",
+      phone: "0912345699",
+      gender: "male",
+      role: "member",
+      avatar: "/gym/profile.png",
+      isActive: false,
+      payments: [
+        { amount: 350, date: "2025-02-01T00:00:00.000Z", method: "cbe" },
+      ],
+      membership: {
+        startDate: "2025-02-01T00:00:00.000Z",
+        endDate: "2025-04-30T00:00:00.000Z",
+        durationMonths: 3,
+        status: "expired",
+      },
+    },
+    {
+      _id: "648f1a1a1a1a1a1a1a1a023",
+      fullName: "Selamawit Desta",
+      phone: "0912345700",
+      gender: "female",
+      role: "member",
+      avatar: "/gym/profile.png",
+      isActive: true,
+      payments: [
+        { amount: 600, date: "2025-03-20T00:00:00.000Z", method: "transfer" },
+      ],
+      membership: {
+        startDate: "2025-03-01T00:00:00.000Z",
+        endDate: "2025-08-31T00:00:00.000Z",
+        durationMonths: 6,
+        status: "active",
+      },
+    },
+    {
+      _id: "648f1a1a1a1a1a1a1a1a024",
+      fullName: "Abel Tadesse",
+      phone: "0912345701",
+      gender: "male",
+      role: "member",
+      avatar: "/gym/profile.png",
+      isActive: true,
+      payments: [
+        { amount: 1000, date: "2025-05-01T00:00:00.000Z", method: "cash" },
+      ],
+      membership: {
+        startDate: "2025-05-01T00:00:00.000Z",
+        endDate: "2025-10-31T00:00:00.000Z",
+        durationMonths: 6,
+        status: "active",
+      },
+    },
+    {
+      _id: "648f1a1a1a1a1a1a1a1a025",
+      fullName: "Mebratu Mekonnen",
+      phone: "0912345702",
+      gender: "male",
+      role: "member",
+      avatar: "/gym/profile.png",
+      isActive: false,
+      payments: [
+        { amount: 450, date: "2025-01-05T00:00:00.000Z", method: "cbe" },
+      ],
+      membership: {
+        startDate: "2025-01-01T00:00:00.000Z",
+        endDate: "2025-06-30T00:00:00.000Z",
+        durationMonths: 6,
         status: "expired",
       },
     },
   ];
+
+  function handleEditAction(member: (typeof invoices)[0]) {
+    const data: MemberDataType = {
+      fullName: member.fullName,
+      phone: member.phone,
+      gender: member.gender,
+      avatar: member.avatar,
+      payments: member.payments.map((p) => ({
+        amount: p.amount,
+        date: new Date(p.date),
+
+        method: p.method as "cash" | "cbe" | "tele-birr" | "transfer",
+      })),
+      durationMonths: member.membership?.durationMonths.toString(),
+    };
+
+    setSelectedMember(data);
+    setEditOpen(true);
+  }
+
+  function handleRenewMember(member: (typeof invoices)[0]) {
+    const data = {
+      id: member._id,
+      fullName: member.fullName,
+      avatar: member.avatar,
+      phone: member.phone,
+      status: member.membership?.status === "active" ? "Active" : "Expired",
+      membershipPeriod: member.membership?.durationMonths.toString() || "0",
+    };
+
+    setRenewMember(data);
+    setRenewOpen(true);
+  }
+
+  function handleDeleteClick({ id, name }: deleteProps) {
+    setName(name);
+    setDeleteId(id); // only store ID/phone
+    setDeleteOpen(true);
+  }
+
+  function handleConfirmDelete(id: string) {
+    console.log("Deleting member with ID:", id);
+    setDeleteOpen(false);
+    setDeleteId("");
+  }
+
   return (
     <div className="bg-slate-900 text-white">
       <div className="mx-auto max-w-7xl px-5 py-6">
@@ -512,12 +502,9 @@ export default function Member() {
                 <TableHead className="text-white">Gender</TableHead>
                 <TableHead className="text-white">Status</TableHead>
                 <TableHead className="text-white">Membership</TableHead>
-                <TableHead className="text-right text-white">
-                  Amount (ETB)
-                </TableHead>
-                <TableHead className="text-right text-white">
-                  Payment Method
-                </TableHead>
+                <TableHead className="text-white">Amount (ETB)</TableHead>
+                <TableHead className="text-white">Payment Method</TableHead>
+                <TableHead className="text-right text-white">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -525,10 +512,7 @@ export default function Member() {
                 const latestPayment =
                   member.payments[member.payments.length - 1];
                 return (
-                  <TableRow
-                    key={member.phone}
-                    onClick={() => handleMemberClick(member)}
-                  >
+                  <TableRow key={member.phone}>
                     <TableCell>
                       <Checkbox
                         checked={selectedMembers.includes(member.phone)}
@@ -573,13 +557,62 @@ export default function Member() {
                     <TableCell className="text-end uppercase">
                       {latestPayment?.method || "-"}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full hover:bg-gray-800"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreVertical className="h-5 w-5 text-gray-300" />
+                          </Button>
+                        </DropdownMenuTrigger>
+
+                        <DropdownMenuContent
+                          align="end"
+                          className="w-40 rounded-none border border-gray-700 bg-[#1C1F26] text-white"
+                          onClick={(e) => e.stopPropagation()} // prevent triggering row click
+                        >
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+
+                          <DropdownMenuItem
+                            className="cursor-pointer text-blue-400 hover:bg-blue-500/10"
+                            onClick={() => handleEditAction(member)}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" /> Edit
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            className="cursor-pointer text-green-400 hover:bg-green-500/10"
+                            onClick={() => handleRenewMember(member)}
+                          >
+                            <RotateCwIcon className="mr-2 h-4 w-4" /> Renew
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            className="cursor-pointer text-red-400 hover:bg-red-500/10"
+                            onClick={() =>
+                              handleDeleteClick({
+                                id: member._id,
+                                name: member.fullName,
+                              })
+                            }
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
             <TableFooter>
               <TableRow className="bg-gray-700">
-                <TableCell colSpan={7} className="text-xl font-bold">
+                <TableCell colSpan={8} className="text-xl font-bold">
                   Total
                 </TableCell>
                 <TableCell className="py-4 text-right text-xl font-bold">
@@ -593,10 +626,22 @@ export default function Member() {
           </div>
         </div>
       </div>
-      <MemberCard
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
+      <EditMemberCard
+        open={editOpen}
         selectedMember={selectedMember}
+        onOpenChange={() => setEditOpen(false)}
+      />
+      <DeleteMember
+        open={deleteOpen}
+        onDelete={() => handleConfirmDelete(deleteId)}
+        onOpenChange={setDeleteOpen}
+        id={deleteId}
+        name={name}
+      />
+      <RenewMembership
+        open={renewOpen}
+        onOpenChange={setRenewOpen}
+        member={renewMember}
       />
     </div>
   );

@@ -1,18 +1,14 @@
 export type MemberDataType = {
   fullName: string;
   phone: string;
-  gender: "male" | "female" | "other";
+  gender: "male" | "female" | string;
   avatar: string;
   payments: {
     amount?: number;
     date: Date;
     method: "cash" | "cbe" | "tele-birr" | "transfer";
   }[];
-  membership?: {
-    startDate?: Date;
-    endDate?: Date;
-    durationMonths?: number;
-  };
+  durationMonths?: string;
 };
 export const createMember = async (memberData: MemberDataType) => {
   const response = await fetch(
