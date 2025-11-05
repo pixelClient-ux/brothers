@@ -27,7 +27,7 @@ export const createMember = catchAsync(async (req, res, next) => {
 });
 
 export const updateMember = catchAsync(async (req, res, next) => {
-  const userId = 123;
+  const memberId = req.params;
   const allowedFields = [
     "fullName",
     "phone",
@@ -48,7 +48,7 @@ export const updateMember = catchAsync(async (req, res, next) => {
     return next(new AppError("No valid fields provided for update", 400));
   }
 
-  const updateMember = await Member.findByIdAndUpdate(userId, updatedData, {
+  const updateMember = await Member.findByIdAndUpdate(memberId, updatedData, {
     new: true,
     runValidators: true,
   });
@@ -61,16 +61,18 @@ export const updateMember = catchAsync(async (req, res, next) => {
 });
 
 export const renewMembership = catchAsync(async (req, res, next) => {
-  const memberId = 1234;
-  const { months } = req.body;
+  const memberId = req.params;
+  const { months, amount, method } = req.body;
+
+  if (!months || months <= 0)
+    return next(new AppError("Please provide valid months.", 400));
+  if (!amount || amount <= 0)
+    return next(new AppError("Please provide valid amount.", 400));
 
   const member = await Member.findById(memberId);
+  if (!member) return next(new AppError("Member not found.", 404));
 
-  if (!member) {
-    return next(new AppError("Member not found", 404));
-  }
-
-  const updateMember = await member.renewMembership(months);
+  const updateMember = await member.renewMembership(months, amount, method);
   res.status(200).json({
     status: "success",
     message: `Membership renewed for ${months} month(s)`,
@@ -79,8 +81,8 @@ export const renewMembership = catchAsync(async (req, res, next) => {
 });
 
 export const deleteMember = catchAsync(async (req, res, next) => {
-  const userId = 4234152;
-  await Member.findByIdAndUpdate(userId, { isActive: false });
+  const memberId = req.params;
+  await Member.findByIdAndUpdate(memberId, { isActive: false });
   res.status(204).json({
     status: "success",
     data: null,

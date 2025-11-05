@@ -32,7 +32,7 @@ export interface MembershipRenewProps {
 interface reneMemberData {
   membershipPeriod: string;
   amount: string;
-  paymentMethod: string;
+  paymentMethod: "cash" | "cbe" | "telebirr" | "transfer";
 }
 
 interface RenewMembershipProps {
@@ -52,10 +52,10 @@ export default function RenewMembership({
     control,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm({
+  } = useForm<reneMemberData>({
     defaultValues: {
       membershipPeriod: "",
-      paymentMethod: "",
+      paymentMethod: "cash",
       amount: "",
     },
   });
@@ -64,8 +64,7 @@ export default function RenewMembership({
     if (open && member) {
       reset({
         membershipPeriod: "",
-
-        paymentMethod: "",
+        paymentMethod: "cash",
         amount: "",
       });
     }
@@ -222,7 +221,7 @@ export default function RenewMembership({
                   </SelectTrigger>
                   <SelectContent className="border-gray-700 bg-gray-900 text-white">
                     <SelectItem value="cash">Cash</SelectItem>
-                    <SelectItem value="card">Card</SelectItem>
+                    <SelectItem value="cbe">CBE</SelectItem>
                     <SelectItem value="transfer">Bank Transfer</SelectItem>
                     <SelectItem value="telebirr">TeleBirr</SelectItem>
                   </SelectContent>

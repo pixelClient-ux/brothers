@@ -10,15 +10,27 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { MemberDataType } from "@/app/(api)/createMember";
-
+import Image from "next/image";
+export type MemberEditType = {
+  memberId: string;
+  fullName: string;
+  phone: string;
+  gender: "male" | "female" | string;
+  avatar: string;
+  payments: {
+    amount?: number;
+    date: Date;
+    method: "cash" | "cbe" | "tele-birr" | "transfer";
+  }[];
+  durationMonths?: string;
+};
 interface MemberCardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedMember: MemberDataType | null;
+  selectedMember: MemberEditType | null;
 }
 
 export default function EditMemberCard({
@@ -31,25 +43,53 @@ export default function EditMemberCard({
     handleSubmit,
     reset,
     control,
+    setValue,
     formState: { errors },
-  } = useForm<MemberDataType>();
+  } = useForm<MemberEditType>();
+
+  const [preview, setPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (selectedMember) {
-      const memberForForm: MemberDataType = {
+      const memberForForm: MemberEditType = {
         ...selectedMember,
         payments:
           selectedMember.payments && selectedMember.payments.length > 0
             ? selectedMember.payments
             : [{ amount: 0, date: new Date(), method: "cash" }],
       };
-      reset(memberForForm);
+      reset(memberForForm); // 👈 This triggers setState synchronously
     }
   }, [selectedMember, reset]);
 
-  const onSubmit = (data: MemberDataType) => {
+  const onSubmit = (data: MemberEditType) => {
     console.log("Updated member:", data);
     onOpenChange(false);
+  };
+
+  // 🖼️ Handle avatar change + validation
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload a valid image file.");
+      return;
+    }
+
+    // Validate size (2MB limit)
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Image must be less than 2MB.");
+      return;
+    }
+
+    // Preview
+    const imageUrl = URL.createObjectURL(file);
+    setPreview(imageUrl);
+
+    // Update form value
+    setValue("avatar", imageUrl as string);
   };
 
   return (
@@ -61,6 +101,43 @@ export default function EditMemberCard({
 
         {selectedMember ? (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="flex items-center gap-6">
+              <div className="relative h-18 w-18 overflow-hidden rounded-full border-2 border-gray-600 shadow-md">
+                <Image
+                  src={preview || "/images/profile.png"}
+                  alt="Profile"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <input
+                  id="avatar"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
+
+                <Label htmlFor="avatar">
+                  <Button
+                    variant="default"
+                    className="rounded-none px-4"
+                    asChild
+                  >
+                    <span className="cursor-pointer">Upload New</span>
+                  </Button>
+                </Label>
+
+                {errors.avatar && (
+                  <p className="text-sm text-red-500">
+                    {errors.avatar.message as string}
+                  </p>
+                )}
+              </div>
+            </div>
+
             {/* Full Name */}
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
@@ -129,7 +206,7 @@ export default function EditMemberCard({
               )}
             </div>
 
-            {/* Latest Payment Amount */}
+            {/* Payment Amount */}
             <div className="space-y-2">
               <Label htmlFor="amount">Amount (ETB)</Label>
               <Input
@@ -148,7 +225,7 @@ export default function EditMemberCard({
               )}
             </div>
 
-            {/* Latest Payment Method */}
+            {/* Payment Method */}
             <div className="space-y-2">
               <Label htmlFor="method">Payment Method</Label>
               <Controller

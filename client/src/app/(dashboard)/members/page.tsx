@@ -39,8 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MemberDataType } from "@/app/(api)/createMember";
-import EditMemberCard from "@/components/EditMemberCard";
+import EditMemberCard, { MemberEditType } from "@/components/EditMemberCard";
 import DeleteMember from "@/components/DeleteMember";
 import RenewMembership, {
   MembershipRenewProps,
@@ -55,7 +54,7 @@ export default function Member() {
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [allSelected, setAllSelected] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<MemberDataType | null>(
+  const [selectedMember, setSelectedMember] = useState<MemberEditType | null>(
     null,
   );
   const [renewOpen, setRenewOpen] = useState(false);
@@ -372,7 +371,8 @@ export default function Member() {
   ];
 
   function handleEditAction(member: (typeof invoices)[0]) {
-    const data: MemberDataType = {
+    const data: MemberEditType = {
+      memberId: member._id,
       fullName: member.fullName,
       phone: member.phone,
       gender: member.gender,
@@ -386,7 +386,7 @@ export default function Member() {
       durationMonths: member.membership?.durationMonths.toString(),
     };
 
-    setSelectedMember(data);
+    setSelectedMember({ ...data });
     setEditOpen(true);
   }
 

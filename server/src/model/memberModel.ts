@@ -21,7 +21,11 @@ export interface IMember {
 }
 
 export interface IMemberDocument extends IMember, Document {
-  renewMembership(months?: number): Promise<IMemberDocument>;
+  renewMembership(
+    months: number,
+    amount: number,
+    method: string
+  ): Promise<IMemberDocument>;
 }
 
 const memberSchema = new Schema<IMemberDocument>(
@@ -84,8 +88,13 @@ memberSchema.pre("save", function (next) {
   next();
 });
 
-memberSchema.methods.renewMembership = function (months: number = 1) {
+memberSchema.methods.renewMembership = function (
+  months: number = 1,
+  amount: number,
+  method: "cash" | "cbe" | "tele-birr" | "transfer" = "cash"
+) {
   const now = new Date();
+
   if (this.membership?.endDate && this.membership.status === "active") {
     const currentEnd = new Date(this.membership.endDate);
     const newEnd = new Date(currentEnd);
@@ -100,7 +109,15 @@ memberSchema.methods.renewMembership = function (months: number = 1) {
     this.membership.endDate = newEnd;
     this.membership.durationMonths = months;
   }
+
   this.membership.status = "active";
+
+  this.payments.push({
+    amount,
+    date: now,
+    method,
+  });
+
   return this.save();
 };
 
