@@ -1,4 +1,5 @@
 import Member from "../model/memberModel.js";
+import ApiFeature from "../utils/ApiFeatures.js";
 import { AppError } from "../utils/AppError.js";
 import { catchAsync } from "../utils/catchAsync.js";
 
@@ -25,7 +26,25 @@ export const createMember = catchAsync(async (req, res, next) => {
     data: newMember,
   });
 });
+export const getMemebr = catchAsync(async (req, res, next) => {
+  let query = Member.find();
+  const apiFeature = new ApiFeature(query, req.query)
+    .filter()
+    .sort()
+    .search()
+    .pagination();
 
+  const members = await apiFeature.query;
+  const totalMembers = await Member.countDocuments();
+
+  // 4. Send response
+  res.status(200).json({
+    status: "success",
+    results: members.length,
+    total: totalMembers,
+    data: members,
+  });
+});
 export const updateMember = catchAsync(async (req, res, next) => {
   const memberId = req.params;
   const allowedFields = [
