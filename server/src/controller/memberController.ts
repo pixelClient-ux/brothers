@@ -26,12 +26,13 @@ export const createMember = catchAsync(async (req, res, next) => {
     data: newMember,
   });
 });
-export const getMemebr = catchAsync(async (req, res, next) => {
+export const getMemebrs = catchAsync(async (req, res, next) => {
+  console.log(req.query);
   let query = Member.find();
-  const apiFeature = new ApiFeature(query, req.query)
+  let apiFeature = new ApiFeature(query, req.query)
     .filter()
-    .sort()
     .search()
+    .range() // move range after search/filter so it doesn’t get overwritten
     .pagination();
 
   const members = await apiFeature.query;
@@ -43,6 +44,19 @@ export const getMemebr = catchAsync(async (req, res, next) => {
     results: members.length,
     total: totalMembers,
     data: members,
+  });
+});
+
+export const getMemebr = catchAsync(async (req, res, next) => {
+  const memberId = req.params;
+  const member = await Member.findById(memberId);
+  if (!member) {
+    return next(new AppError("Memver is not exist", 404));
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: member,
   });
 });
 export const updateMember = catchAsync(async (req, res, next) => {

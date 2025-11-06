@@ -18,20 +18,18 @@ export default class ApiFeature<T extends Document> {
     this.queryString = queryString;
   }
 
-  // ✅ 1. Filtering
   filter() {
     const queryObj: Record<string, any> = { ...this.queryString };
-    const excludeQuery = ["page", "sort", "search"];
+    const excludeQuery = ["page", "sort", "search", "range"];
     excludeQuery.forEach((key) => delete queryObj[key]);
 
     if (queryObj.status && queryObj.status !== "all") {
-      queryObj.status = queryObj.status;
+      this.query = this.query.find({ "membership.status": queryObj.status });
     }
-    this.query = this.query.find(queryObj);
+
     return this;
   }
 
-  // ✅ 2. Searching (by name or phone)
   search() {
     if (this.queryString.search) {
       const regex = new RegExp(this.queryString.search, "i");
@@ -42,35 +40,32 @@ export default class ApiFeature<T extends Document> {
     return this;
   }
 
-  sort() {
-    const timeRange = this.queryString.sort || "all";
+  range() {
+    const timeRange = this.queryString.range;
+    if (!timeRange || timeRange === "all") return this;
+
     const now = new Date();
-    let filterDate: Date | null = null;
+    let filterDate: Date;
 
     switch (timeRange) {
-      case "7d":
-        filterDate = new Date(now.setDate(now.getDate() - 7));
+      case "7":
+        filterDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
-      case "1m":
-        filterDate = new Date(now.setMonth(now.getMonth() - 1));
+      case "30":
+        filterDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         break;
-      case "3m":
-        filterDate = new Date(now.setMonth(now.getMonth() - 3));
+      case "90":
+        filterDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
         break;
-      case "1y":
-        filterDate = new Date(now.setFullYear(now.getFullYear() - 1));
+      case "365":
+        filterDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         break;
-      case "all":
       default:
-        filterDate = null;
+        return this;
     }
 
-    if (filterDate) {
-      this.query = this.query.find({ createdAt: { $gte: filterDate } });
-    }
-
-    // Default sorting: newest first
-    this.query = this.query.sort({ createdAt: -1 });
+    // merge filter with existing query
+    this.query = this.query.find({ createdAt: { $gte: filterDate } });
 
     return this;
   }

@@ -3,7 +3,7 @@ import mongoose, { Model, Schema, model, Document } from "mongoose";
 export interface IMember {
   fullName: string;
   phone: string;
-  gender: "male" | "female" | "other";
+  gender: "male" | "female";
   role: "member";
   avatar: string;
   isActive: boolean;
@@ -32,7 +32,7 @@ const memberSchema = new Schema<IMemberDocument>(
   {
     fullName: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true, unique: true },
-    gender: { type: String, enum: ["male", "female"], default: "other" },
+    gender: { type: String, enum: ["male", "female"] },
     role: { type: String, enum: ["member"], default: "member" },
     avatar: { type: String, default: "/images/profile.png" },
     isActive: { type: Boolean, default: true },
