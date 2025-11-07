@@ -50,6 +50,7 @@ export default class ApiFeature<T extends Document> {
     switch (timeRange) {
       case "7":
         filterDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        console.log("filterDate", filterDate);
         break;
       case "30":
         filterDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -64,7 +65,6 @@ export default class ApiFeature<T extends Document> {
         return this;
     }
 
-    // merge filter with existing query
     this.query = this.query.find({ createdAt: { $gte: filterDate } });
 
     return this;

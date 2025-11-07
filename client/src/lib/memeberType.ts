@@ -1,4 +1,4 @@
-export interface memberType {
+export interface MemberType {
   _id: string;
   fullName: string;
   phone: string;
@@ -6,15 +6,21 @@ export interface memberType {
   role: "member";
   avatar: string;
   isActive: boolean;
+
   payments: {
-    amount?: number;
-    date: Date;
+    amount: number;
+    date: string; // ✅ use string instead of Date for API responses
     method: "cash" | "cbe" | "tele-birr" | "transfer";
   }[];
+
   membership?: {
-    startDate?: Date;
-    endDate?: Date;
+    startDate?: string;
+    endDate?: string;
     durationMonths?: number;
     status?: string;
   };
+
+  createdAt: string;
+  updatedAt?: string;
+  daysLeft?: number;
 }

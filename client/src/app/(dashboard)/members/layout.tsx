@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { FileUp, Search, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { generateReport } from "@/app/(api)/generateMemberReport";
 
 export default function MemberLayout({
   children,
@@ -46,9 +47,25 @@ export default function MemberLayout({
         params.set(key, value);
       }
     });
+    params.delete("page");
 
     router.push(`?${params.toString()}`, { scroll: false });
   };
+
+  async function handleReport() {
+    const filters: Record<string, string | undefined> = {
+      status: searchParams.get("status") || undefined,
+      range: searchParams.get("range") || undefined,
+    };
+
+    try {
+      await generateReport({ searchParams: filters });
+      console.log("Report downloaded successfully");
+    } catch (err) {
+      console.error("Failed to generate report:", err);
+    }
+  }
+
   return (
     <div className="bg-slate-900 text-white">
       <div className="mx-auto max-w-7xl px-5 py-6">
@@ -126,7 +143,10 @@ export default function MemberLayout({
                 </SelectContent>
               </Select>
 
-              <Button className="flex items-center gap-2 rounded-none">
+              <Button
+                className="flex items-center gap-2 rounded-none"
+                onClick={handleReport}
+              >
                 <FileUp className="h-4 w-4" /> Export Members
               </Button>
             </div>

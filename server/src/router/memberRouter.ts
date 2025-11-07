@@ -2,6 +2,7 @@ import express from "express";
 import {
   createMember,
   deleteMember,
+  generateReport,
   getMemebr,
   getMemebrs,
   renewMembership,
@@ -12,6 +13,7 @@ const router = express.Router();
 
 router
   .get("/", getMemebrs)
+  .get("/reports", generateReport)
   .post("/create", createMember)
   .get("/:memberId", getMemebr)
   .delete("/:memberId", deleteMember)

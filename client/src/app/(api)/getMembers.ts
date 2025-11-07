@@ -1,4 +1,4 @@
-import { memberType } from "@/lib/memeberType";
+import { MemberType } from "@/lib/memeberType";
 
 interface GetMemberProps {
   searchParams: {
@@ -8,9 +8,15 @@ interface GetMemberProps {
   };
 }
 
+interface getMembersResponse {
+  status: string;
+  data: MemberType[];
+  total: number;
+}
+
 export const getMembers = async ({
   searchParams,
-}: GetMemberProps): Promise<memberType[]> => {
+}: GetMemberProps): Promise<getMembersResponse> => {
   const query = new URLSearchParams();
 
   if (searchParams.status) query.append("status", searchParams.status);
@@ -33,5 +39,6 @@ export const getMembers = async ({
   }
 
   const result = await response.json();
-  return result.data;
+  console.log(result.data);
+  return result;
 };

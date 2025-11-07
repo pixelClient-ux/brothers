@@ -10,7 +10,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -30,17 +29,21 @@ import DeleteMember from "@/components/DeleteMember";
 import RenewMembership, {
   MembershipRenewProps,
 } from "@/components/RenewMember";
-import { memberType } from "@/lib/memeberType";
+import { useSearchParams } from "next/navigation";
+import { MemberType } from "@/lib/memeberType";
 interface deleteProps {
   id: string;
   name: string;
 }
 
 interface MemberListProps {
-  data: memberType[];
+  data: MemberType[];
+  total: number;
 }
 
-export default function MemberList({ data }: MemberListProps) {
+export default function MemberList({ data, total }: MemberListProps) {
+  const searchParams = useSearchParams();
+  const currentPage = searchParams.get("page") || 1;
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [allSelected, setAllSelected] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberEditType | null>(
@@ -72,7 +75,7 @@ export default function MemberList({ data }: MemberListProps) {
     }
   };
 
-  function handleEditAction(member: memberType) {
+  function handleEditAction(member: MemberType) {
     const data: MemberEditType = {
       memberId: member._id,
       fullName: member.fullName,
@@ -92,7 +95,7 @@ export default function MemberList({ data }: MemberListProps) {
     setEditOpen(true);
   }
 
-  function handleRenewMember(member: memberType) {
+  function handleRenewMember(member: MemberType) {
     const data = {
       id: member._id,
       fullName: member.fullName,
@@ -236,19 +239,9 @@ export default function MemberList({ data }: MemberListProps) {
               );
             })}
           </TableBody>
-          <TableFooter>
-            <TableRow className="bg-gray-700">
-              <TableCell colSpan={7} className="text-xl font-bold">
-                Total
-              </TableCell>
-              <TableCell className="py-4 text-right text-xl font-bold">
-                34567 <span className="py-4 text-green-500">ETB</span>
-              </TableCell>
-            </TableRow>
-          </TableFooter>
         </Table>
         <div>
-          <PaginationBar currentPage={5} totalPage={12} />
+          <PaginationBar currentPage={Number(currentPage)} totalPage={total} />
         </div>
       </div>
 
