@@ -1,0 +1,23 @@
+import { renewMembership } from "@/app/(api)/renewMembership";
+import { reneMemberData } from "@/components/RenewMember";
+import { useMutation } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+interface RenewMemberProps {
+  data: reneMemberData;
+  memberId: string;
+}
+export default function useRenewMember() {
+  const { mutate, isPending } = useMutation({
+    mutationFn: ({ data, memberId }: RenewMemberProps) =>
+      renewMembership({ data, memberId }),
+    onSuccess: (data) => {
+      toast.success(data.message);
+    },
+    onError: (error) => {
+      console.log(error);
+      toast.error("Somethin went wrong ,please try again");
+    },
+  });
+
+  return { mutate, isPending };
+}

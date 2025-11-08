@@ -20,6 +20,8 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import Image from "next/image";
 import { useEffect } from "react";
+import useRenewMember from "@/hooks/useRenewMember";
+import { Loader2 } from "lucide-react";
 
 export interface MembershipRenewProps {
   id: string;
@@ -29,7 +31,7 @@ export interface MembershipRenewProps {
   status: string;
   membershipPeriod: string;
 }
-interface reneMemberData {
+export interface reneMemberData {
   membershipPeriod: string;
   amount: string;
   paymentMethod: "cash" | "cbe" | "telebirr" | "transfer";
@@ -46,12 +48,14 @@ export default function RenewMembership({
   onOpenChange,
   member,
 }: RenewMembershipProps) {
+  const { mutate, isPending } = useRenewMember();
+  const memberId = member?.id;
   const {
     register,
     handleSubmit,
     control,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<reneMemberData>({
     defaultValues: {
       membershipPeriod: "",
@@ -71,7 +75,14 @@ export default function RenewMembership({
   }, [open, member, reset]);
 
   function submitHandler(data: reneMemberData) {
-    console.log(data);
+    if (!memberId) {
+      return;
+    }
+    mutate({ data, memberId });
+
+    if (!isPending) {
+      onOpenChange(false);
+    }
   }
 
   if (!member) return null;
@@ -262,10 +273,17 @@ export default function RenewMembership({
             </Button>
             <Button
               type="submit"
-              className="rounded-none"
-              disabled={isSubmitting}
+              className="flex items-center justify-center gap-2 rounded-none"
+              disabled={isPending}
             >
-              {isSubmitting ? "Renewing..." : "Renew Membership"}
+              {isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Renewing...
+                </>
+              ) : (
+                "Renew Membership"
+              )}
             </Button>
           </DialogFooter>
         </form>

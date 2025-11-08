@@ -4,7 +4,7 @@ import { AppError } from "../utils/AppError.js";
 import { catchAsync } from "../utils/catchAsync.js";
 import PDFDocument from "pdfkit";
 import fs from "fs";
-import path from "path";
+
 export const createMember = catchAsync(async (req, res, next) => {
   const { fullName, phone, avatar, gender, membership, payments } = req.body;
 
@@ -29,7 +29,6 @@ export const createMember = catchAsync(async (req, res, next) => {
   });
 });
 export const getMemebrs = catchAsync(async (req, res, next) => {
-  console.log(req.query);
   let query = Member.find();
   let apiFeature = new ApiFeature(query, req.query)
     .filter()
@@ -44,7 +43,7 @@ export const getMemebrs = catchAsync(async (req, res, next) => {
 
   const limit = 10;
   const totalPage = Math.ceil(totalDocs / limit);
-  console.log(members);
+
   res.status(200).json({
     status: "success",
     total: totalPage,
@@ -65,43 +64,87 @@ export const getMemebr = catchAsync(async (req, res, next) => {
   });
 });
 export const updateMember = catchAsync(async (req, res, next) => {
-  const memberId = req.params;
+  const { memberId } = req.params;
+
   const allowedFields = [
     "fullName",
     "phone",
     "gender",
     "avatar",
-    "membership",
-    "payments",
+    "durationMonths",
+    "amount",
+    "method",
   ];
 
-  const updatedData: Record<string, any> = {};
-  Object.keys(req.body).forEach((key) => {
+  const filteredData: Record<string, any> = {};
+  for (const key of Object.keys(req.body)) {
     if (allowedFields.includes(key)) {
-      updatedData[key] = req.body[key];
+      filteredData[key] = req.body[key];
     }
-  });
+  }
 
-  if (Object.keys(updatedData).length === 0) {
+  if (Object.keys(filteredData).length === 0) {
     return next(new AppError("No valid fields provided for update", 400));
   }
 
-  const updateMember = await Member.findByIdAndUpdate(memberId, updatedData, {
-    new: true,
-    runValidators: true,
-  });
+  const member = await Member.findById(memberId);
+  if (!member) {
+    return next(new AppError("Member not found", 404));
+  }
+
+  if (filteredData.fullName) member.fullName = filteredData.fullName;
+  if (filteredData.phone) member.phone = filteredData.phone;
+  if (filteredData.gender) member.gender = filteredData.gender;
+  if (filteredData.avatar) member.avatar = filteredData.avatar;
+
+  if (member.membership) {
+    if (filteredData.durationMonths) {
+      const months = parseInt(filteredData.durationMonths);
+
+      member.membership.durationMonths = months;
+
+      if (member.membership.startDate) {
+        const start = new Date(member.membership.startDate);
+        const newEnd = new Date(start);
+        newEnd.setMonth(start.getMonth() + months);
+        member.membership.endDate = newEnd;
+
+        const today = new Date();
+        if (newEnd > today) {
+          member.membership.status = "active";
+          member.isActive = true; // ✅ mark member as active
+        } else {
+          console.log(newEnd);
+          member.membership.status = "expired";
+          member.isActive = false; // optional: mark inactive if expired
+        }
+      }
+    }
+  }
+
+  // update latest payment details (only edit, not new payment)
+  if (filteredData.amount || filteredData.method) {
+    const lastPayment = member.payments[member.payments.length - 1];
+    if (lastPayment) {
+      if (filteredData.amount)
+        lastPayment.amount = parseFloat(filteredData.amount);
+      if (filteredData.method) lastPayment.method = filteredData.method;
+    }
+  }
+
+  await member.save();
 
   res.status(200).json({
     status: "success",
     message: "Member updated successfully",
-    data: updateMember,
+    data: member,
   });
 });
 
 export const renewMembership = catchAsync(async (req, res, next) => {
-  const memberId = req.params;
+  const { memberId } = req.params;
   const { months, amount, method } = req.body;
-
+  console.log(months, amount, method);
   if (!months || months <= 0)
     return next(new AppError("Please provide valid months.", 400));
   if (!amount || amount <= 0)
@@ -119,7 +162,7 @@ export const renewMembership = catchAsync(async (req, res, next) => {
 });
 
 export const deleteMember = catchAsync(async (req, res, next) => {
-  const memberId = req.params;
+  const { memberId } = req.params;
   await Member.findByIdAndUpdate(memberId, { isActive: false });
   res.status(204).json({
     status: "success",
@@ -154,10 +197,6 @@ export const generateReport = catchAsync(async (req, res, next) => {
   };
 
   const usableWidth = doc.page.width - 100;
-
-  // === HEADER BAR ===
-  const logoPath = path.join("server", "src", "images", "gym.png");
-  if (fs.existsSync(logoPath)) doc.image(logoPath, 50, 15, { width: 40 });
 
   doc
     .save()

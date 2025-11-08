@@ -12,7 +12,7 @@ export type MemberDataType = {
 };
 export const createMember = async (memberData: MemberDataType) => {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/members/create`,
+    `${process.env.NEXT_PUBLIC_API_URL}/members/create`,
     {
       method: "POST",
       headers: {

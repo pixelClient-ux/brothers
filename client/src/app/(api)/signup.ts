@@ -2,7 +2,7 @@ import { signUpType } from "@/hooks/useSignup";
 
 export default async function signUp(data: signUpType) {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/admins/signup`,
+    `${process.env.NEXT_PUBLIC_API_URL}/admins/signup`,
     {
       method: "POST",
       headers: {

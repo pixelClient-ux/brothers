@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileUp, Search, Trash } from "lucide-react";
+import { FileUp, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { generateReport } from "@/app/(api)/generateMemberReport";
 
@@ -114,15 +114,6 @@ export default function MemberLayout({
             />
           </div>
           <div className="flex flex-col items-center gap-3 md:flex-row">
-            <div className="flex items-center gap-2">
-              <div className="text-white">
-                3 <span>member selected</span>
-              </div>
-              <Button variant="destructive" className="rounded-none">
-                <Trash />
-                <span>Delete</span>
-              </Button>
-            </div>
             <div className="flex items-center gap-3">
               <Select
                 value={selectedRange}

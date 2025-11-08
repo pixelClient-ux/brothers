@@ -17,7 +17,7 @@ router
   .post("/create", createMember)
   .get("/:memberId", getMemebr)
   .delete("/:memberId", deleteMember)
-  .patch("/:memberId", updateMember)
-  .post("/renew/:memberId", renewMembership);
+  .patch("/updateMember/:memberId", updateMember)
+  .patch("/renew/:memberId", renewMembership);
 
 export default router;

@@ -2,7 +2,7 @@ import { loginType } from "@/hooks/useLogin";
 
 export default async function login(data: loginType) {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/admins/login`,
+    `${process.env.NEXT_PUBLIC_API_URL}/admins/login`,
     {
       method: "POST",
       headers: {

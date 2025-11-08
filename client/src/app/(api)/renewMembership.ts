@@ -1,20 +1,20 @@
-interface renewMembershipProps {
-  _id: string;
-  membershipPeriod: string;
-  paymentMethod: "cash" | "cbe" | "tele-birr" | "transfer";
-  amount: string;
+import { reneMemberData } from "@/components/RenewMember";
+
+interface RenewMemberProps {
+  data: reneMemberData;
+  memberId: string;
 }
-export const renewMembership = async (data: renewMembershipProps) => {
+export const renewMembership = async ({ data, memberId }: RenewMemberProps) => {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/members/renew/${data._id}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/members/renew/${memberId}`,
       {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          month: data.membershipPeriod,
+          months: data.membershipPeriod,
           method: data.paymentMethod,
           amount: data.amount,
         }),

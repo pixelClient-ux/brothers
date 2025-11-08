@@ -4,7 +4,7 @@ interface updatedDataType {
 }
 export const updateAdminProfile = async (updatedData: updatedDataType) => {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/admins/update-profile`,
+    `${process.env.NEXT_PUBLIC_API_URL}/admins/update-profile`,
     {
       method: "PATCH",
       headers: {

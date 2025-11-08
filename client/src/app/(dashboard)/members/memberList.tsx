@@ -1,20 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-
-import { MoreVertical, Pencil, RotateCwIcon, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, RotateCw, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import { PaginationBar } from "@/components/PaginationBar";
 import {
   DropdownMenu,
@@ -24,17 +21,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import EditMemberCard, { MemberEditType } from "@/components/EditMemberCard";
+
+import EditMemberCard from "@/components/EditMemberCard";
 import DeleteMember from "@/components/DeleteMember";
 import RenewMembership, {
   MembershipRenewProps,
 } from "@/components/RenewMember";
-import { useSearchParams } from "next/navigation";
+
 import { MemberType } from "@/lib/memeberType";
-interface deleteProps {
-  id: string;
-  name: string;
-}
 
 interface MemberListProps {
   data: MemberType[];
@@ -42,84 +36,68 @@ interface MemberListProps {
 }
 
 export default function MemberList({ data, total }: MemberListProps) {
-  const searchParams = useSearchParams();
-  const currentPage = searchParams.get("page") || 1;
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [allSelected, setAllSelected] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<MemberEditType | null>(
-    null,
-  );
+  const [selectedMember, setSelectedMember] = useState<MemberType | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string>("");
+  const [deleteName, setDeleteName] = useState<string>("");
   const [renewOpen, setRenewOpen] = useState(false);
   const [renewMember, setRenewMember] = useState<MembershipRenewProps | null>(
     null,
   );
-  const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState<string>("");
-  const [name, setName] = useState("");
 
   const toggleAll = () => {
-    if (allSelected) {
-      setSelectedMembers([]);
-    } else {
-      setSelectedMembers(data.map((member) => member.phone));
-    }
+    if (allSelected) setSelectedMembers([]);
+    else setSelectedMembers(data.map((m) => m._id));
     setAllSelected(!allSelected);
   };
 
-  const toggleMember = (phone: string) => {
-    if (selectedMembers.includes(phone)) {
-      setSelectedMembers(selectedMembers.filter((p) => p !== phone));
+  const toggleMember = (id: string) => {
+    if (selectedMembers.includes(id)) {
+      setSelectedMembers(selectedMembers.filter((i) => i !== id));
     } else {
-      setSelectedMembers([...selectedMembers, phone]);
+      setSelectedMembers([...selectedMembers, id]);
     }
   };
 
-  function handleEditAction(member: MemberType) {
-    const data: MemberEditType = {
-      memberId: member._id,
-      fullName: member.fullName,
-      phone: member.phone,
-      gender: member.gender,
-      avatar: member.avatar,
-      payments: member.payments.map((p) => ({
-        amount: p.amount,
-        date: new Date(p.date),
-
-        method: p.method as "cash" | "cbe" | "tele-birr" | "transfer",
-      })),
-      durationMonths: member.membership?.durationMonths?.toString(),
-    };
-
-    setSelectedMember({ ...data });
+  const handleEdit = (member: MemberType) => {
+    setSelectedMember(member);
     setEditOpen(true);
-  }
+  };
 
-  function handleRenewMember(member: MemberType) {
-    const data = {
+  const handleDelete = (member: MemberType) => {
+    setDeleteId(member._id);
+    setDeleteName(member.fullName);
+    setDeleteOpen(true);
+  };
+
+  const handleRenew = (member: MemberType) => {
+    setRenewMember({
       id: member._id,
       fullName: member.fullName,
       avatar: member.avatar,
       phone: member.phone,
       status: member.membership?.status === "active" ? "Active" : "Expired",
       membershipPeriod: member.membership?.durationMonths?.toString() || "0",
-    };
-
-    setRenewMember(data);
+    });
     setRenewOpen(true);
-  }
+  };
 
-  function handleDeleteClick({ id, name }: deleteProps) {
-    setName(name);
-    setDeleteId(id);
-    setDeleteOpen(true);
-  }
-
-  function handleConfirmDelete(id: string) {
-    console.log("Deleting member with ID:", id);
-    setDeleteOpen(false);
-    setDeleteId("");
-  }
+  // Memoized to avoid unnecessary recalculations
+  const membersWithLastPayment = useMemo(() => {
+    return data.map((m) => {
+      const latestPayment = m.payments[m.payments.length - 1];
+      return {
+        ...m,
+        latestPayment,
+        membershipStatus:
+          m.membership?.status === "active" ? "Active" : "Expired",
+        daysLeft: m.daysLeft ?? 0,
+      };
+    });
+  }, [data]);
 
   return (
     <>
@@ -127,40 +105,46 @@ export default function MemberList({ data, total }: MemberListProps) {
         <Table className="mt-4">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50px]">
+              <TableCell className="w-[50px]">
                 <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
-              </TableHead>
-              <TableHead className="text-white">Member</TableHead>
-              <TableHead className="text-white">Phone</TableHead>
-              <TableHead className="text-white">Gender</TableHead>
-              <TableHead className="text-white">Status</TableHead>
-              <TableHead className="text-right text-white">
-                Amount (ETB)
-              </TableHead>
-              <TableHead className="text-right text-white">
-                Payment Method
-              </TableHead>
-              <TableHead className="text-right text-white">Actions</TableHead>
+              </TableCell>
+              <TableCell>Member</TableCell>
+              <TableCell>Phone</TableCell>
+              <TableCell>Gender</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Membership Left</TableCell>
+              <TableCell className="text-right">Amount (ETB)</TableCell>
+              <TableCell className="text-right">Payment Method</TableCell>
+              <TableCell className="text-right">Actions</TableCell>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((member) => {
-              const latestPayment = member.payments[member.payments.length - 1];
+            {membersWithLastPayment.map((member) => {
+              const isActive = member.membershipStatus === "Active";
+
               return (
-                <TableRow key={member.phone}>
+                <TableRow
+                  key={member._id}
+                  className={`transition-colors duration-200 ${
+                    isActive
+                      ? "bg-gray-900 hover:bg-gray-800"
+                      : "bg-red-950 hover:bg-red-900"
+                  }`}
+                >
                   <TableCell>
                     <Checkbox
-                      checked={selectedMembers.includes(member.phone)}
-                      onCheckedChange={() => toggleMember(member.phone)}
+                      checked={selectedMembers.includes(member._id)}
+                      onCheckedChange={() => toggleMember(member._id)}
                     />
                   </TableCell>
+
                   <TableCell className="flex items-center gap-2 font-medium">
                     <Image
                       height={32}
                       width={32}
                       src={member.avatar || "/gym/profile.png"}
                       alt={member.fullName}
-                      className="h-8 w-8 rounded-full object-cover"
+                      className="h-8 w-8 rounded-full border-2 border-gray-600 object-cover"
                     />
                     {member.fullName}
                   </TableCell>
@@ -169,66 +153,67 @@ export default function MemberList({ data, total }: MemberListProps) {
 
                   <TableCell className="capitalize">{member.gender}</TableCell>
 
+                  {/* Membership Status with Badge */}
                   <TableCell>
-                    {member.isActive ? (
-                      <span className="text-green-500">Active</span>
+                    {member.membershipStatus === "Active" ? (
+                      <span className="font-semibold text-green-500">
+                        Active
+                      </span>
                     ) : (
-                      <span className="text-red-500">Expired</span>
+                      <span className="font-semibold text-red-500">
+                        Expired
+                      </span>
                     )}
                   </TableCell>
-
-                  <TableCell className="text-right">
-                    {latestPayment?.amount != null
-                      ? `${latestPayment.amount.toFixed(2)} ETB`
-                      : "-"}
+                  <TableCell className="text-center">
+                    <span
+                      className={`rounded-full px-4 py-1 text-sm ${
+                        isActive
+                          ? "bg-green-800 text-white"
+                          : "bg-red-800 text-white"
+                      }`}
+                    >
+                      {member.daysLeft} days
+                    </span>
                   </TableCell>
 
-                  <TableCell className="text-end uppercase">
-                    {latestPayment?.method || "-"}
+                  <TableCell className="text-right font-medium">
+                    {member.latestPayment?.amount?.toFixed(2) || "-"} ETB
                   </TableCell>
+
+                  <TableCell className="text-right font-medium uppercase">
+                    {member.latestPayment?.method || "-"}
+                  </TableCell>
+
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="rounded-full hover:bg-gray-800"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreVertical className="h-5 w-5 text-gray-300" />
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="h-5 w-5" />
                         </Button>
                       </DropdownMenuTrigger>
 
                       <DropdownMenuContent
                         align="end"
-                        className="w-40 rounded-none border border-gray-700 bg-[#1C1F26] text-white"
-                        onClick={(e) => e.stopPropagation()}
+                        className="w-44 rounded-md border border-gray-700 bg-gray-800 text-white"
                       >
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-
                         <DropdownMenuItem
-                          className="cursor-pointer text-blue-400 hover:bg-blue-500/10"
-                          onClick={() => handleEditAction(member)}
+                          onClick={() => handleEdit(member)}
+                          className="text-blue-400 hover:bg-blue-600/20"
                         >
                           <Pencil className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
-
                         <DropdownMenuItem
-                          className="cursor-pointer text-green-400 hover:bg-green-500/10"
-                          onClick={() => handleRenewMember(member)}
+                          onClick={() => handleRenew(member)}
+                          className="text-green-400 hover:bg-green-600/20"
                         >
-                          <RotateCwIcon className="mr-2 h-4 w-4" /> Renew
+                          <RotateCw className="mr-2 h-4 w-4" /> Renew
                         </DropdownMenuItem>
-
                         <DropdownMenuItem
-                          className="cursor-pointer text-red-400 hover:bg-red-500/10"
-                          onClick={() =>
-                            handleDeleteClick({
-                              id: member._id,
-                              name: member.fullName,
-                            })
-                          }
+                          onClick={() => handleDelete(member)}
+                          className="text-red-400 hover:bg-red-600/20"
                         >
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
@@ -240,22 +225,25 @@ export default function MemberList({ data, total }: MemberListProps) {
             })}
           </TableBody>
         </Table>
-        <div>
-          <PaginationBar currentPage={Number(currentPage)} totalPage={total} />
-        </div>
+
+        <PaginationBar currentPage={1} totalPage={total} />
       </div>
 
+      {/* Modals */}
       <EditMemberCard
         open={editOpen}
         selectedMember={selectedMember}
-        onOpenChange={() => setEditOpen(false)}
+        onOpenChange={setEditOpen}
       />
       <DeleteMember
         open={deleteOpen}
-        onDelete={() => handleConfirmDelete(deleteId)}
+        onDelete={() => {
+          console.log("Deleted", deleteId);
+          setDeleteOpen(false);
+        }}
         onOpenChange={setDeleteOpen}
         id={deleteId}
-        name={name}
+        name={deleteName}
       />
       <RenewMembership
         open={renewOpen}

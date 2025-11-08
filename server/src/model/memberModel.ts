@@ -88,35 +88,43 @@ memberSchema.pre("save", function (next) {
   next();
 });
 
-memberSchema.methods.renewMembership = function (
+memberSchema.methods.renewMembership = async function (
   months: number = 1,
   amount: number,
   method: "cash" | "cbe" | "tele-birr" | "transfer" = "cash"
 ) {
   const now = new Date();
 
+  const addMonths = (date: Date, months: number) => {
+    const result = new Date(date);
+    result.setMonth(result.getMonth() + months);
+    return result;
+  };
+
   if (this.membership?.endDate && this.membership.status === "active") {
-    const currentEnd = new Date(this.membership.endDate);
-    const newEnd = new Date(currentEnd);
-    newEnd.setMonth(currentEnd.getMonth() + months);
-    this.membership.endDate = newEnd;
+    // Extend from current endDate
+    this.membership.endDate = addMonths(
+      new Date(this.membership.endDate),
+      months
+    );
     this.membership.durationMonths += months;
   } else {
-    const newStart = now;
-    const newEnd = new Date();
-    newEnd.setMonth(newStart.getMonth() + months);
-    this.membership.startDate = newStart;
-    this.membership.endDate = newEnd;
+    // Start from today if expired or no membership
+    this.membership.startDate = now;
+    this.membership.endDate = addMonths(now, months);
     this.membership.durationMonths = months;
   }
 
-  this.membership.status = "active";
+  // Update status
+  const today = new Date();
+  this.membership.status =
+    this.membership.endDate > today ? "active" : "expired";
 
-  this.payments.push({
-    amount,
-    date: now,
-    method,
-  });
+  // Add payment
+  this.payments.push({ amount, date: now, method });
+
+  // Ensure member is active
+  this.isActive = this.membership.status === "active";
 
   return this.save();
 };

@@ -1,20 +1,22 @@
-import { MemberEditType } from "@/components/EditMemberCard";
+import { EditMemberData } from "@/components/EditMemberCard";
 
-export const updateMember = async (data: MemberEditType) => {
-  const { memberId, ...payload } = data;
-
+interface updatedMemberProps {
+  data: EditMemberData;
+  memberId: string;
+}
+export const updateMember = async ({ data, memberId }: updatedMemberProps) => {
   if (!memberId) {
     throw new Error("Member ID is required to update a member.");
   }
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/members/renew/${memberId}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/members/updateMember/${memberId}`,
     {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(data),
     },
   );
 
