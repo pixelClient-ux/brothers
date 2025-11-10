@@ -22,8 +22,10 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.2",
     "morgan": "^1.10.1",
+    "multer": "^2.0.2",
     "nodemailer": "^7.0.10",
-    "pdfkit": "^0.17.2"
+    "pdfkit": "^0.17.2",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
@@ -32,7 +34,8 @@
     "@types/helmet": "^0.0.48",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
-    "@types/node": "^24.9.1",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.10.0",
     "@types/nodemailer": "^7.0.3",
     "@types/pdfkit": "^0.17.3",
     "concurrently": "^9.2.1",

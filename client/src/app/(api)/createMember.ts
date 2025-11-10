@@ -1,16 +1,5 @@
-export type MemberDataType = {
-  fullName: string;
-  phone: string;
-  gender: "male" | "female" | string;
-  avatar: string;
-  payments: {
-    amount?: number;
-    date: Date;
-    method: "cash" | "cbe" | "tele-birr" | "transfer";
-  }[];
-  durationMonths?: string;
-};
-export const createMember = async (memberData: MemberDataType) => {
+export const createMember = async (memberData: FormData) => {
+  console.log(memberData);
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/members/create`,
     {
@@ -18,7 +7,7 @@ export const createMember = async (memberData: MemberDataType) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(memberData),
+      body: memberData,
     },
   );
 

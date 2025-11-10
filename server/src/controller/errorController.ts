@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-
+import multer from "multer";
 interface AppError extends Error {
   statusCode: number;
   status: string;
@@ -14,7 +14,20 @@ export const globalErrorHandler = (
 ) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
-
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      err.message = "File is too large. Maximum size allowed is 5MB.";
+      err.statusCode = 400;
+      err.status = "fail";
+      err.isOperational = true;
+    }
+    if (err.code === "LIMIT_UNEXPECTED_FILE") {
+      err.message = "Unexpected file field.";
+      err.statusCode = 400;
+      err.status = "fail";
+      err.isOperational = true;
+    }
+  }
   if (process.env.NODE_ENV === "production") {
     sendProductionError(err, res);
   } else {

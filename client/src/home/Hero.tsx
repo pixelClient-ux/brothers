@@ -20,6 +20,7 @@ import {
 import {
   ArrowDownRight,
   ArrowUpRight,
+  Loader2,
   MoveRightIcon,
   Plus,
 } from "lucide-react";
@@ -28,22 +29,20 @@ import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import HeroSkeleton from "@/components/HeroLoadingskeleton";
-import { differenceInMonths } from "date-fns";
+import useCreateMember from "@/hooks/useCreateMember";
 
 export type MemberPayload = {
   fullName: string;
   phone: string;
   gender: "male" | "female" | "other";
   avatar: string;
-  payments: {
-    amount?: number;
-    date: Date;
-    method: "cash" | "cbe" | "tele-birr" | "transfer";
-  }[];
-  membershipPeriod: string;
+  payments: number;
+  method: string;
+  durationMonths: number;
 };
 
 export default function Hero() {
+  const { mutate, isPending } = useCreateMember();
   const [open, setOpen] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string>();
 
@@ -52,10 +51,9 @@ export default function Hero() {
     phone: string;
     gender?: "male" | "female" | "other";
     avatar?: FileList;
-    paymentAmount?: number;
-    paymentMethod?: "cash" | "cbe" | "tele-birr" | "transfer";
-
-    membershipPeriod: string;
+    amount?: number;
+    method?: "cash" | "cbe" | "tele-birr" | "transfer";
+    durationMonths: string;
   };
 
   const {
@@ -68,10 +66,10 @@ export default function Hero() {
     defaultValues: {
       fullName: "",
       phone: "",
-      paymentAmount: undefined,
-      paymentMethod: undefined,
+      amount: undefined,
+      method: undefined,
       gender: undefined,
-      membershipPeriod: "1",
+      durationMonths: "1",
     },
   });
 
@@ -81,26 +79,24 @@ export default function Hero() {
   };
 
   const onSubmit = (data: FormValues) => {
-    const memberPayload: MemberPayload = {
-      fullName: data.fullName!,
-      phone: data.phone!,
-      gender: data.gender || "other",
-      avatar: avatarPreview || "",
-      payments: [
-        {
-          amount: data.paymentAmount,
-          date: new Date(),
-          method: data.paymentMethod!,
-        },
-      ],
-      membershipPeriod: data.membershipPeriod,
-    };
+    const formData = new FormData();
+    formData.append("fullName", data.fullName);
+    formData.append("phone", data.phone);
+    formData.append("gender", data.gender || "");
+    formData.append("amount", String(data.amount || 0));
+    formData.append("method", data.method || "");
+    formData.append("durationMonths", data.durationMonths);
+    if (data.avatar && data.avatar.length > 0) {
+      formData.append("avatar", data.avatar[0]);
+    }
 
-    console.log("Payload sent to backend:", memberPayload);
-
-    reset();
-    setAvatarPreview(undefined);
-    setOpen(false);
+    mutate(formData, {
+      onSuccess: () => {
+        reset();
+        setAvatarPreview(undefined);
+        setOpen(false);
+      },
+    });
   };
 
   const stats = [
@@ -345,7 +341,7 @@ export default function Hero() {
                         <Label htmlFor="paymentAmount">Payment Amount</Label>
                         <Input
                           id="paymentAmount"
-                          {...register("paymentAmount", {
+                          {...register("amount", {
                             required: "Payment amount is required",
                             valueAsNumber: true,
                             min: { value: 0, message: "Amount must be >= 0" },
@@ -354,9 +350,9 @@ export default function Hero() {
                           min={0}
                           className="rounded-none"
                         />
-                        {errors.paymentAmount && (
+                        {errors.amount && (
                           <p className="mt-1 text-sm text-red-400">
-                            {errors.paymentAmount.message}
+                            {errors.amount.message}
                           </p>
                         )}
                       </div>
@@ -365,7 +361,7 @@ export default function Hero() {
                         <Label>Payment Method</Label>
                         <Controller
                           control={control}
-                          name="paymentMethod"
+                          name="method"
                           rules={{ required: "Select a payment method" }}
                           render={({ field }) => (
                             <Select onValueChange={field.onChange}>
@@ -385,9 +381,9 @@ export default function Hero() {
                             </Select>
                           )}
                         />
-                        {errors.paymentMethod && (
+                        {errors.method && (
                           <p className="mt-1 text-sm text-red-400">
-                            {errors.paymentMethod.message}
+                            {errors.method.message}
                           </p>
                         )}
                       </div>
@@ -397,7 +393,7 @@ export default function Hero() {
                       <Label>Membership Duration</Label>
                       <Controller
                         control={control}
-                        name="membershipPeriod"
+                        name="durationMonths"
                         rules={{ required: "Select membership period" }}
                         render={({ field }) => (
                           <Select
@@ -409,25 +405,41 @@ export default function Hero() {
                             </SelectTrigger>
                             <SelectContent className="rounded-none">
                               <SelectItem value="1">1 Month</SelectItem>
+                              <SelectItem value="2">2 Months</SelectItem>
                               <SelectItem value="3">3 Months</SelectItem>
+                              <SelectItem value="4">4 Months</SelectItem>
+                              <SelectItem value="5">5 Months</SelectItem>
                               <SelectItem value="6">6 Months</SelectItem>
+                              <SelectItem value="7">7 Months</SelectItem>
+                              <SelectItem value="8">8 Months</SelectItem>
+                              <SelectItem value="9">9 Months</SelectItem>
+                              <SelectItem value="10">10 Months</SelectItem>
+                              <SelectItem value="11">11 Months</SelectItem>
                               <SelectItem value="12">12 Months</SelectItem>
                             </SelectContent>
                           </Select>
                         )}
                       />
-                      {errors.membershipPeriod && (
+                      {errors.durationMonths && (
                         <p className="mt-1 text-sm text-red-400">
-                          {errors.membershipPeriod.message}
+                          {errors.durationMonths.message}
                         </p>
                       )}
                     </div>
 
                     <Button
                       type="submit"
-                      className="bg-primary my-5 w-full rounded-none text-white"
+                      disabled={isPending}
+                      className="bg-primary my-5 flex w-full items-center justify-center rounded-none text-white"
                     >
-                      Add Member
+                      {isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Adding...
+                        </>
+                      ) : (
+                        "Add Member"
+                      )}
                     </Button>
                   </form>
                 </SheetContent>

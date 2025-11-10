@@ -2,24 +2,55 @@ import ApiFeature from "../utils/ApiFeatures.js";
 import { AppError } from "../utils/AppError.js";
 import { catchAsync } from "../utils/catchAsync.js";
 import PDFDocument from "pdfkit";
-import fs from "fs";
 import Member from "../model/memberModel.js";
 
-export const createMember = catchAsync(async (req, res, next) => {
-  const { fullName, phone, avatar, gender, membership, payments } = req.body;
+function addMonthsKeepEndOfMonth(date: Date, months: number) {
+  const origDay = date.getDate();
+  const targetYear = date.getFullYear();
+  const targetMonthIndex = date.getMonth() + months;
+  const lastDayOfTargetMonth = new Date(
+    targetYear,
+    targetMonthIndex + 1,
+    0
+  ).getDate();
+  const day = Math.min(origDay, lastDayOfTargetMonth);
+  return new Date(targetYear, targetMonthIndex, day, 23, 59, 59, 999);
+}
 
+export const createMember = catchAsync(async (req, res, next) => {
+  const { fullName, phone, gender } = req.body;
+  let { durationMonths, amount, method } = req.body;
+  durationMonths = Number(durationMonths);
+  amount = Number(amount);
+
+  console.log(req.body);
   const exitingUser = await Member.findOne({ phone });
   if (exitingUser) {
     return next(new AppError("Member with this phone already exists", 409));
   }
+  durationMonths = Number(durationMonths);
+  amount = Number(amount);
+  method = method;
+
+  const now = new Date();
+  const startDate = now;
+  const endDate = addMonthsKeepEndOfMonth(startDate, durationMonths);
+  const payment = { amount, date: now, method };
+  const avatarUrl = req.body.avatar || "/images/profile.png";
 
   const newMember = await Member.create({
     fullName,
     phone,
     gender,
-    avatar,
-    membership,
-    payments,
+    avatar: avatarUrl,
+    payments: [payment],
+    membership: {
+      startDate,
+      endDate,
+      durationMonths,
+      status: "active",
+    },
+    isActive: true,
   });
 
   res.status(200).json({

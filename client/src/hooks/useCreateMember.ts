@@ -1,17 +1,17 @@
-import { createMember, MemberDataType } from "@/app/(api)/createMember";
+import { createMember } from "@/app/(api)/createMember";
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 export default function useCreateMember() {
-  const mutate = useMutation({
-    mutationFn: (userData: MemberDataType) => createMember(userData),
+  const { mutate, isPending } = useMutation({
+    mutationFn: (userData: FormData) => createMember(userData),
     onSuccess: () => {
       toast.success("Member created successfully");
     },
-    onError: () => {
-      toast.error("Somethin went wrong, please try agin");
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
-  return { mutate };
+  return { mutate, isPending };
 }
