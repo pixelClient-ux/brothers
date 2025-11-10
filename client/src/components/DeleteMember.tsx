@@ -1,5 +1,6 @@
 "use client";
 
+import useRemoveMember from "@/hooks/useRemoveMember";
 import {
   Dialog,
   DialogContent,
@@ -8,12 +9,12 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface DeleteMemberProps {
   id: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onDelete: (id: string) => void;
   name: string;
 }
 
@@ -21,12 +22,18 @@ export default function DeleteMember({
   id,
   open,
   onOpenChange,
-  onDelete,
   name,
 }: DeleteMemberProps) {
+  const { mutate, isPending } = useRemoveMember();
   const handleDelete = () => {
-    onDelete(id);
-    onOpenChange(false); // Close the dialog after deletion
+    mutate(id, {
+      onSuccess: () => {
+        onOpenChange(false);
+      },
+      onError: () => {
+        onOpenChange(false);
+      },
+    });
   };
 
   return (
@@ -53,10 +60,18 @@ export default function DeleteMember({
           </Button>
           <Button
             type="button"
-            className="rounded-none bg-red-600"
+            className="flex items-center gap-2 rounded-none bg-red-600"
             onClick={handleDelete}
+            disabled={isPending}
           >
-            Remove
+            {isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Removing...
+              </>
+            ) : (
+              "Remove"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

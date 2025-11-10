@@ -45,27 +45,20 @@ export default class ApiFeature<T extends Document> {
     if (!timeRange || timeRange === "all") return this;
 
     const now = new Date();
-    let filterDate: Date;
+    let filterDate: Date | null = null;
 
-    switch (timeRange) {
-      case "7":
-        filterDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        console.log("filterDate", filterDate);
-        break;
-      case "30":
-        filterDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      case "90":
-        filterDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-        break;
-      case "365":
-        filterDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-        break;
-      default:
-        return this;
+    const days = Number(timeRange);
+    if (!isNaN(days)) {
+      filterDate = new Date(now);
+      filterDate.setDate(now.getDate() - days);
     }
 
-    this.query = this.query.find({ createdAt: { $gte: filterDate } });
+    if (filterDate) {
+      console.log("🔎 Filtering createdAt from:", filterDate.toISOString());
+      this.query = this.query.find({
+        createdAt: { $gte: filterDate },
+      });
+    }
 
     return this;
   }

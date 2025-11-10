@@ -69,10 +69,14 @@ export default function EditMemberCard({
 
   const onSubmit = (data: EditMemberData) => {
     if (!memberId) return;
-    mutate({ data, memberId: memberId });
-    if (!isPending) {
-      onOpenChange(false);
-    }
+    mutate(
+      { data, memberId: memberId },
+      {
+        onSuccess: () => {
+          onOpenChange(true);
+        },
+      },
+    );
   };
 
   if (!selectedMember) return null;

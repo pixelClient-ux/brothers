@@ -104,7 +104,7 @@ export const login = catchAsync(async (req, res, next) => {
   createSendToken(admin, 200, res, "Logged in successfully!");
 });
 
-export const restrictTo = (...roles: string[]) => {
+export const VerifyAdmin = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!roles.includes(req.admin.roles)) {
       return next(

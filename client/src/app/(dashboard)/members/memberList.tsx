@@ -29,6 +29,7 @@ import RenewMembership, {
 } from "@/components/RenewMember";
 
 import { MemberType } from "@/lib/memeberType";
+import { useSearchParams } from "next/navigation";
 
 interface MemberListProps {
   data: MemberType[];
@@ -47,6 +48,9 @@ export default function MemberList({ data, total }: MemberListProps) {
   const [renewMember, setRenewMember] = useState<MembershipRenewProps | null>(
     null,
   );
+  const searchParams = useSearchParams();
+
+  const currentPage = searchParams.get("page") || 1;
 
   const toggleAll = () => {
     if (allSelected) setSelectedMembers([]);
@@ -155,7 +159,7 @@ export default function MemberList({ data, total }: MemberListProps) {
 
                   {/* Membership Status with Badge */}
                   <TableCell>
-                    {member.membershipStatus === "Active" ? (
+                    {member.membership?.status === "active" ? (
                       <span className="font-semibold text-green-500">
                         Active
                       </span>
@@ -226,7 +230,7 @@ export default function MemberList({ data, total }: MemberListProps) {
           </TableBody>
         </Table>
 
-        <PaginationBar currentPage={1} totalPage={total} />
+        <PaginationBar currentPage={Number(currentPage)} totalPage={total} />
       </div>
 
       {/* Modals */}
@@ -237,10 +241,6 @@ export default function MemberList({ data, total }: MemberListProps) {
       />
       <DeleteMember
         open={deleteOpen}
-        onDelete={() => {
-          console.log("Deleted", deleteId);
-          setDeleteOpen(false);
-        }}
         onOpenChange={setDeleteOpen}
         id={deleteId}
         name={deleteName}

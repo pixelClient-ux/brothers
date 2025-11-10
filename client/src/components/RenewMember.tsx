@@ -75,14 +75,21 @@ export default function RenewMembership({
   }, [open, member, reset]);
 
   function submitHandler(data: reneMemberData) {
-    if (!memberId) {
-      return;
-    }
-    mutate({ data, memberId });
+    if (!memberId) return;
 
-    if (!isPending) {
-      onOpenChange(false);
-    }
+    mutate(
+      { data, memberId },
+      {
+        onSuccess: () => {
+          // Only close dialog when API succeeds
+          onOpenChange(false);
+        },
+        onError: (err) => {
+          // Optional: show toast or log error, keep dialog open
+          console.error("Failed to renew membership:", err);
+        },
+      },
+    );
   }
 
   if (!member) return null;

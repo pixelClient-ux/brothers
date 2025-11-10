@@ -1,9 +1,9 @@
-import Member from "../model/memberModel.js";
 import ApiFeature from "../utils/ApiFeatures.js";
 import { AppError } from "../utils/AppError.js";
 import { catchAsync } from "../utils/catchAsync.js";
 import PDFDocument from "pdfkit";
 import fs from "fs";
+import Member from "../model/memberModel.js";
 
 export const createMember = catchAsync(async (req, res, next) => {
   const { fullName, phone, avatar, gender, membership, payments } = req.body;
@@ -153,7 +153,11 @@ export const renewMembership = catchAsync(async (req, res, next) => {
   const member = await Member.findById(memberId);
   if (!member) return next(new AppError("Member not found.", 404));
 
-  const updateMember = await member.renewMembership(months, amount, method);
+  const updateMember = await member.renewMembership(
+    Number(months),
+    amount,
+    method
+  );
   res.status(200).json({
     status: "success",
     message: `Membership renewed for ${months} month(s)`,
@@ -163,10 +167,24 @@ export const renewMembership = catchAsync(async (req, res, next) => {
 
 export const deleteMember = catchAsync(async (req, res, next) => {
   const { memberId } = req.params;
-  await Member.findByIdAndUpdate(memberId, { isActive: false });
-  res.status(204).json({
+
+  // Find member
+  const member = await Member.findById(memberId);
+
+  if (!member) {
+    return next(new AppError("No member found with that ID", 404));
+  }
+
+  // Mark as deleted (soft delete)
+  member.isDeleted = true;
+  member.deletedAt = new Date();
+  member.isActive = false;
+
+  await member.save();
+
+  res.status(200).json({
     status: "success",
-    data: null,
+    message: "Member removed successfully",
   });
 });
 

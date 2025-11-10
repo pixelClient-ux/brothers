@@ -7,11 +7,12 @@ interface RenewMemberProps {
   memberId: string;
 }
 export default function useRenewMember() {
-  const { mutate, isPending } = useMutation({
+  const { mutate, isPending, isSuccess } = useMutation({
     mutationFn: ({ data, memberId }: RenewMemberProps) =>
       renewMembership({ data, memberId }),
     onSuccess: (data) => {
       toast.success(data.message);
+      window.location.reload();
     },
     onError: (error) => {
       console.log(error);
@@ -19,5 +20,5 @@ export default function useRenewMember() {
     },
   });
 
-  return { mutate, isPending };
+  return { mutate, isPending, isSuccess };
 }

@@ -17,6 +17,7 @@ export interface MemberType {
     startDate?: string;
     endDate?: string;
     durationMonths?: number;
+    dayLeft?: number;
     status?: string;
   };
 
