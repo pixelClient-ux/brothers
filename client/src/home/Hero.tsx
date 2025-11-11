@@ -240,8 +240,9 @@ export default function Hero() {
                         {...register("phone", {
                           required: "Phone number is required",
                           pattern: {
-                            value: /^[0-9\-\+\s()]{7,20}$/,
-                            message: "Enter a valid phone number",
+                            value: /^(?:\+2519\d{8}|09\d{8})$/,
+                            message:
+                              "Enter a valid Ethiopian phone number (e.g. 0912345678 or +251912345678)",
                           },
                         })}
                         type="tel"

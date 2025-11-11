@@ -4,6 +4,8 @@ interface AppError extends Error {
   statusCode: number;
   status: string;
   isOperational: boolean;
+  code?: string;
+  type?: string;
 }
 
 export const globalErrorHandler = (
@@ -27,6 +29,12 @@ export const globalErrorHandler = (
       err.status = "fail";
       err.isOperational = true;
     }
+  }
+  if (err.code === "ENTITY_TOO_LARGE" || err.type === "entity.too.large") {
+    err.message = "Image upload is too large.";
+    err.statusCode = 413;
+    err.status = "fail";
+    err.isOperational = true;
   }
   if (process.env.NODE_ENV === "production") {
     sendProductionError(err, res);

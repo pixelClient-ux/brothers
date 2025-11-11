@@ -26,6 +26,9 @@ export default class ApiFeature<T extends Document> {
     if (queryObj.status && queryObj.status !== "all") {
       this.query = this.query.find({ "membership.status": queryObj.status });
     }
+    if (!this.queryString.sort) {
+      this.query = this.query.sort({ createdAt: -1 });
+    }
 
     return this;
   }

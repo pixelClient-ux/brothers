@@ -4,10 +4,7 @@ export const createMember = async (memberData: FormData) => {
     `${process.env.NEXT_PUBLIC_API_URL}/members/create`,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: memberData,
+      body: memberData, // <-- just pass FormData
     },
   );
 

@@ -3,6 +3,11 @@ import { AppError } from "../utils/AppError.js";
 import { catchAsync } from "../utils/catchAsync.js";
 import PDFDocument from "pdfkit";
 import Member from "../model/memberModel.js";
+import { newMemberTemplate } from "../utils/newMemberTemplate.js";
+import sendEmail from "../utils/sendEmail.js";
+import dotenv from "dotenv";
+import { renewMemberTemplate } from "../utils/renewMemberTemplate.js";
+dotenv.config();
 
 function addMonthsKeepEndOfMonth(date: Date, months: number) {
   const origDay = date.getDate();
@@ -18,7 +23,8 @@ function addMonthsKeepEndOfMonth(date: Date, months: number) {
 }
 
 export const createMember = catchAsync(async (req, res, next) => {
-  const { fullName, phone, gender } = req.body;
+  const { fullName, phone, gender, avatar } = req.body;
+  console.log("AVatar url", avatar);
   let { durationMonths, amount, method } = req.body;
   durationMonths = Number(durationMonths);
   amount = Number(amount);
@@ -36,13 +42,12 @@ export const createMember = catchAsync(async (req, res, next) => {
   const startDate = now;
   const endDate = addMonthsKeepEndOfMonth(startDate, durationMonths);
   const payment = { amount, date: now, method };
-  const avatarUrl = req.body.avatar || "/images/profile.png";
 
   const newMember = await Member.create({
     fullName,
     phone,
     gender,
-    avatar: avatarUrl,
+    avatar,
     payments: [payment],
     membership: {
       startDate,
@@ -52,6 +57,24 @@ export const createMember = catchAsync(async (req, res, next) => {
     },
     isActive: true,
   });
+  const adminEmail = process.env.EMAIL_USERNAME;
+  if (adminEmail) {
+    const html = newMemberTemplate({
+      fullName,
+      phone,
+      gender,
+      startDate,
+      endDate,
+      durationMonths,
+      amount,
+      method,
+    });
+    await sendEmail({
+      email: adminEmail,
+      subject: `New Member Joined: ${fullName}`,
+      html,
+    });
+  }
 
   res.status(200).json({
     status: "success",
@@ -189,6 +212,38 @@ export const renewMembership = catchAsync(async (req, res, next) => {
     amount,
     method
   );
+  if (!member.membership || !member.membership.endDate) {
+    return next(
+      new AppError("Member does not have an active membership.", 400)
+    );
+  }
+
+  if (!updateMember.membership?.endDate) {
+    return next(
+      new AppError("Member does not have an active membership.", 400)
+    );
+  }
+
+  const oldEndDate = new Date(member.membership.endDate);
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (adminEmail) {
+    const html = renewMemberTemplate({
+      fullName: updateMember.fullName,
+      phone: updateMember.phone,
+      gender: updateMember.gender,
+      oldEndDate,
+      newEndDate: updateMember.membership.endDate,
+      addedMonths: months,
+      totalPaid: amount,
+      method,
+    });
+
+    await sendEmail({
+      email: adminEmail,
+      subject: `Membership Renewed: ${updateMember.fullName}`,
+      html,
+    });
+  }
   res.status(200).json({
     status: "success",
     message: `Membership renewed for ${months} month(s)`,
