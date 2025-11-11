@@ -8,7 +8,7 @@ export interface loginType {
 }
 export default function useLogin() {
   const router = useRouter();
-  const mutate = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: (data: loginType) => login(data),
     onSuccess: () => {
       router.push("/");
@@ -18,5 +18,5 @@ export default function useLogin() {
     },
   });
 
-  return { mutate };
+  return { mutate, isPending };
 }

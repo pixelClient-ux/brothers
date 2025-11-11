@@ -39,11 +39,14 @@ export const updateProfile = catchAsync(async (req, res, next) => {
         "A confirmation email has been sent to your new address. Please verify to complete the change.",
     });
   }
+  if (req.body.avatar) {
+    admin.avatar = req.body.avatar;
+  }
   await admin.save();
 
   res.status(200).json({
     status: "success",
-    message: "your fullName is updated successfully",
+    message: "your data is updated successfully",
   });
 });
 

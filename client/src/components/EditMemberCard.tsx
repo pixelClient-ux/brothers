@@ -14,7 +14,7 @@ import { Controller, useForm } from "react-hook-form";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import Image from "next/image";
 import { MemberType } from "@/lib/memeberType";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useUpdateMember from "@/hooks/useUpdateMember";
 import { Loader2 } from "lucide-react";
 
@@ -24,11 +24,11 @@ interface MemberCardProps {
   selectedMember: MemberType | null;
 }
 
-export interface EditMemberData {
+export interface FormValue {
   fullName: string;
   phone: string;
   gender: "male" | "female";
-  avatar: string;
+  avatar: FileList | null;
   durationMonths: number;
   amount: number;
   method: "cash" | "cbe" | "tele-birr" | "transfer";
@@ -40,40 +40,75 @@ export default function EditMemberCard({
   selectedMember,
 }: MemberCardProps) {
   const { mutate, isPending } = useUpdateMember();
+  const [preview, setPreview] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors },
-  } = useForm<EditMemberData>();
+  } = useForm<FormValue>({
+    defaultValues: {
+      fullName: "",
+      phone: "",
+      gender: "male",
+      avatar: null,
+      durationMonths: 1,
+      amount: 0,
+      method: "cash",
+    },
+  });
 
   const memberId = selectedMember?._id;
+  const avatarFile = watch("avatar");
+
+  useEffect(() => {
+    if (avatarFile && avatarFile.length > 0) {
+      const file = avatarFile[0];
+      const url = URL.createObjectURL(file);
+      setPreview(url);
+      return () => URL.revokeObjectURL(url);
+    } else if (selectedMember) {
+      setPreview(selectedMember.avatar);
+    }
+  }, [avatarFile, selectedMember]);
 
   useEffect(() => {
     if (selectedMember) {
       const lastPayment =
         selectedMember.payments[selectedMember.payments.length - 1];
-
       reset({
         fullName: selectedMember.fullName,
         phone: selectedMember.phone,
         gender: selectedMember.gender,
-        avatar: selectedMember.avatar,
+        avatar: null,
         durationMonths: selectedMember.membership?.durationMonths || 1,
         amount: lastPayment?.amount || 0,
         method: lastPayment?.method || "cash",
       });
+      setPreview(selectedMember.avatar);
     }
   }, [selectedMember, reset]);
 
-  const onSubmit = (data: EditMemberData) => {
+  const onSubmit = (data: FormValue) => {
     if (!memberId) return;
+    const formData = new FormData();
+    formData.append("fullName", data.fullName);
+    formData.append("phone", data.phone);
+    formData.append("gender", data.gender);
+    formData.append("durationMonths", data.durationMonths.toString());
+    formData.append("amount", data.amount.toString());
+    formData.append("method", data.method);
+    if (data.avatar && data.avatar.length > 0) {
+      formData.append("avatar", data.avatar[0]);
+    }
     mutate(
-      { data, memberId: memberId },
+      { data: formData, memberId },
       {
         onSuccess: () => {
-          onOpenChange(true);
+          onOpenChange(false);
         },
       },
     );
@@ -87,12 +122,11 @@ export default function EditMemberCard({
         <DialogHeader>
           <DialogTitle>Edit Member</DialogTitle>
         </DialogHeader>
-
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="flex items-center gap-6">
             <div className="relative h-20 w-20 overflow-hidden rounded-full border-2 border-gray-600 shadow-md">
               <Image
-                src={selectedMember.avatar || "/images/profile.png"}
+                src={preview || "/images/profile.png"}
                 alt="Profile"
                 fill
                 className="object-cover"

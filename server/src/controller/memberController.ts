@@ -225,7 +225,7 @@ export const renewMembership = catchAsync(async (req, res, next) => {
   }
 
   const oldEndDate = new Date(member.membership.endDate);
-  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminEmail = process.env.EMAIL_USERNAME;
   if (adminEmail) {
     const html = renewMemberTemplate({
       fullName: updateMember.fullName,

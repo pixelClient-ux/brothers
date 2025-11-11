@@ -12,16 +12,22 @@ import {
   resizeMemberAvatar,
   upload,
 } from "../middleware/uploadMemberAvatar.js";
+import { protect } from "../controller/authController.js";
 
 const router = express.Router();
-
+router.use(protect);
 router
   .get("/", getMemebrs)
   .get("/reports", generateReport)
   .post("/create", upload.single("avatar"), resizeMemberAvatar, createMember)
   .get("/:memberId", getMemebr)
   .delete("/:memberId", deleteMember)
-  .patch("/updateMember/:memberId", updateMember)
+  .patch(
+    "/updateMember/:memberId",
+    upload.single("avatar"),
+    resizeMemberAvatar,
+    updateMember
+  )
   .patch("/renew/:memberId", renewMembership);
 
 export default router;

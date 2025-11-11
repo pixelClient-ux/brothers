@@ -1,13 +1,14 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { Mail, Lock, EyeOff, Eye } from "lucide-react";
+import { Mail, Lock, EyeOff, Eye, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import useLogin from "@/hooks/useLogin";
 
 type LoginForm = {
   email: string;
@@ -15,6 +16,7 @@ type LoginForm = {
 };
 
 export default function LoginPage() {
+  const { mutate, isPending } = useLogin();
   const {
     register,
     handleSubmit,
@@ -23,7 +25,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(true);
 
   const onSubmit = (data: LoginForm) => {
-    console.log(data);
+    mutate(data);
   };
 
   return (
@@ -114,9 +116,13 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="bg-primary hover:bg-primary/90 mt-2 w-full cursor-pointer rounded-none text-white"
+              disabled={isPending}
+              className="bg-primary hover:bg-primary/90 mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-none text-white"
             >
-              Login
+              {isPending && (
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
+              )}
+              <span>{isPending ? "Logging in..." : "Login"}</span>
             </Button>
 
             <div className="w-fullr flex items-center gap-2">

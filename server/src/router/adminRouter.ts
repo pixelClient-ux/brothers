@@ -7,13 +7,23 @@ import {
   resetPassword,
   signUp,
 } from "../controller/authController.js";
+import {
+  resizeMemberAvatar,
+  upload,
+} from "../middleware/uploadMemberAvatar.js";
 
 const router = express.Router();
 router.post("/signup", signUp);
-router.use(protect);
+
 router
   .post("/login", login)
   .post("/forget-password", forgetPassword)
   .post("/reset-password/:token", resetPassword)
-  .patch("/update-profile", updateProfile);
+  .patch(
+    "/update-profile",
+    protect,
+    upload.single("avatar"),
+    resizeMemberAvatar,
+    updateProfile
+  );
 export default router;

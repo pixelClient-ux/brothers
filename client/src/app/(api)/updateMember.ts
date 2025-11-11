@@ -1,7 +1,5 @@
-import { EditMemberData } from "@/components/EditMemberCard";
-
 interface updatedMemberProps {
-  data: EditMemberData;
+  data: FormData;
   memberId: string;
 }
 export const updateMember = async ({ data, memberId }: updatedMemberProps) => {
@@ -13,10 +11,7 @@ export const updateMember = async ({ data, memberId }: updatedMemberProps) => {
     `${process.env.NEXT_PUBLIC_API_URL}/members/updateMember/${memberId}`,
     {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
+      body: data,
     },
   );
 

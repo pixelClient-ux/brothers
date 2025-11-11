@@ -22,7 +22,6 @@ export const getMembers = async ({
   if (searchParams.status) query.append("status", searchParams.status);
   if (searchParams.page) query.append("page", searchParams.page);
   if (searchParams.range) query.append("range", searchParams.range);
-  console.log("Query from fronedn", query);
   const url = `${process.env.NEXT_PUBLIC_API_URL}/members?${query.toString()}`;
 
   const response = await fetch(url, {
@@ -39,6 +38,5 @@ export const getMembers = async ({
   }
 
   const result = await response.json();
-  console.log(result.data);
   return result;
 };

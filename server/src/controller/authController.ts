@@ -98,8 +98,9 @@ export const login = catchAsync(async (req, res, next) => {
   if (!admin) {
     return next(new AppError("admin is not found", 400));
   }
-  if (!admin.comparePassword(password, admin.password)) {
-    return next(new AppError("invalid email or password", 401));
+  const isMatch = await admin.comparePassword(password, admin.password);
+  if (!isMatch) {
+    return next(new AppError("Invalid email or password", 401));
   }
   createSendToken(admin, 200, res, "Logged in successfully!");
 });
@@ -217,8 +218,9 @@ export const protect = catchAsync(
         );
       }
     }
+    console.log(currentUser);
 
-    (req as any).admin = currentUser;
+    req.admin = currentUser;
     next();
   }
 );

@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { useState } from "react";
+import { useUpdateAdminProfile } from "@/hooks/useUpdateAdminProfile";
+import { Loader2 } from "lucide-react";
 
 type PersonalInfoForm = {
   fullName: string;
@@ -19,8 +21,9 @@ type PasswordForm = {
 };
 
 export default function Settings() {
+  const { mutate, isPending } = useUpdateAdminProfile();
   const [profileImage, setProfileImage] = useState<string | null>(null);
-
+  const [profileFile, setProfileFile] = useState<File | null>(null);
   const {
     register: registerInfo,
     handleSubmit: handleInfoSubmit,
@@ -48,11 +51,18 @@ export default function Settings() {
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setProfileImage(URL.createObjectURL(file));
+    if (file) {
+      setProfileFile(file);
+      setProfileImage(URL.createObjectURL(file)); // preview
+    }
   };
 
   const onPersonalInfoSubmit = (data: PersonalInfoForm) => {
-    console.log("Personal Info Submitted:", data);
+    const formData = new FormData();
+    formData.append("fullName", data.fullName);
+    formData.append("email", data.email);
+    if (profileFile) formData.append("avatar", profileFile);
+    mutate(formData);
   };
 
   const onPasswordSubmit = (data: PasswordForm) => {
@@ -141,8 +151,15 @@ export default function Settings() {
           </div>
 
           <div className="flex w-full justify-end">
-            <Button type="submit" className="bg-primary rounded-none">
-              Save Changes
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="bg-primary flex items-center justify-center gap-2 rounded-none"
+            >
+              {isPending && (
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
+              )}
+              {isPending ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </form>
