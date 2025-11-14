@@ -82,6 +82,93 @@ export const createMember = catchAsync(async (req, res, next) => {
     data: newMember,
   });
 });
+
+export const getDashboardStats = catchAsync(async (req, res, next) => {
+  // === 1. Total Members ===
+  const totalMembers = await Member.countDocuments();
+
+  // === 2. Active Members ===
+  const activeMembers = await Member.countDocuments({
+    "membership.status": "active",
+    isActive: true,
+  });
+
+  // === 3. New Members in Range ===
+  const newMembersFeature = new ApiFeature(Member.find(), req.query).range();
+  const newMembers = await newMembersFeature.query.countDocuments();
+
+  // === 4. Total Revenue in Range ===
+  const revenueFeature = new ApiFeature(Member.find(), req.query).range();
+  const revenueMembers = await revenueFeature.query;
+  const totalRevenue = revenueMembers.reduce((sum, m) => {
+    const lastPayment = m.payments?.[m.payments.length - 1];
+    return sum + (lastPayment?.amount || 0);
+  }, 0);
+
+  // === 5. Monthly New Members (Last 12 Months) ===
+  const monthlyAggregation = await Member.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: new Date(new Date().setMonth(new Date().getMonth() - 11)),
+        },
+      },
+    },
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+
+  const last12Months = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (11 - i));
+    return d.toISOString().slice(0, 7);
+  });
+
+  const monthlyMembers = last12Months.map((month) => ({
+    month,
+    count: monthlyAggregation.find((m: any) => m._id === month)?.count || 0,
+  }));
+
+  // === 6. Status Breakdown ===
+  const statusCounts = await Member.aggregate([
+    { $group: { _id: "$membership.status", count: { $sum: 1 } } },
+  ]);
+
+  const status = {
+    active: statusCounts.find((s: any) => s._id === "active")?.count || 0,
+    expired: statusCounts.find((s: any) => s._id === "expired")?.count || 0,
+    inactive: statusCounts.find((s: any) => s._id === "inactive")?.count || 0,
+  };
+
+  // === 7. Gender Breakdown ===
+  const genderCounts = await Member.aggregate([
+    { $group: { _id: "$gender", count: { $sum: 1 } } },
+  ]);
+
+  const gender = {
+    male: genderCounts.find((g: any) => g._id === "male")?.count || 0,
+    female: genderCounts.find((g: any) => g._id === "female")?.count || 0,
+    other: genderCounts.find((g: any) => g._id === "other")?.count || 0,
+  };
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      totalMembers,
+      activeMembers,
+      newMembers,
+      totalRevenue,
+      monthlyMembers,
+      status,
+      gender,
+    },
+  });
+});
 export const getMemebrs = catchAsync(async (req, res, next) => {
   let query = Member.find();
   let apiFeature = new ApiFeature(query, req.query)

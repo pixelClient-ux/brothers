@@ -9,7 +9,7 @@ import jwt, { type JwtPayload } from "jsonwebtoken";
 import { Document, Types } from "mongoose";
 import { welcomeEmailTemplate } from "../utils/welcomeTemplateEmail.js";
 import dotenv from "dotenv";
-
+import type { CookieOptions } from "express";
 dotenv.config();
 interface DecodedToken extends JwtPayload {
   id: string;
@@ -41,7 +41,8 @@ const createSendToken = (
   message: string
 ) => {
   const token = signToken(admin._id);
-  const cookieOptions = {
+
+  const cookieOptions: CookieOptions = {
     expires: new Date(
       Date.now() +
         parseInt(process.env.JWT_COOKIES_EXPIRES_IN as string) *
@@ -51,20 +52,19 @@ const createSendToken = (
           1000
     ),
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
+    sameSite: "lax",
   };
 
   res.cookie("jwt", token, cookieOptions);
+
   (admin as any).password = undefined;
 
   res.status(statusCode).json({
     status: "success",
-    token,
     message,
-    data: { admin },
   });
 };
-
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error("Missing JWT_SECRET environment variable");
@@ -176,51 +176,55 @@ export const resetPassword = catchAsync(async (req, res, next) => {
   createSendToken(admin, 200, res, "Password reset successful — welcome back!");
 });
 
-export const protect = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    let token: string | undefined;
+export const protect = catchAsync(async (req, res, next) => {
+  // 1️⃣ Get token from cookie
+  const token = req.cookies?.jwt;
+  console.log("request Cookis😁💥", req.cookies);
+  console.log("request header💥", req.headers);
 
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
-    ) {
-      token = req.headers.authorization.split(" ")[1];
-    }
-    console.log("token", token);
-    if (!token) {
-      return next(
-        new AppError("You are not logged in. Please log in to get access.", 401)
-      );
-    }
+  if (!token) {
+    return next(
+      new AppError("You are not logged in. Please log in to get access.", 401)
+    );
+  }
 
-    const decoded = jwt.verify(
+  // 2️⃣ Verify token
+  let decoded: DecodedToken;
+  try {
+    decoded = jwt.verify(
       token,
       process.env.JWT_SECRET as string
     ) as DecodedToken;
-
-    const currentUser = await Admin.findById(decoded.id);
-    if (!currentUser) {
-      return next(
-        new AppError("The user belonging to this token no longer exists.", 401)
-      );
-    }
-
-    if (currentUser.passwordChangedAt) {
-      const changedTimestamp = Math.floor(
-        currentUser.passwordChangedAt.getTime() / 1000
-      );
-      if (decoded.iat < changedTimestamp) {
-        return next(
-          new AppError(
-            "User recently changed password. Please log in again.",
-            401
-          )
-        );
-      }
-    }
-    console.log(currentUser);
-
-    req.admin = currentUser;
-    next();
+  } catch (err) {
+    return next(
+      new AppError("Invalid or expired token. Please log in again.", 401)
+    );
   }
-);
+
+  // 3️⃣ Check if admin still exists
+  const currentUser = await Admin.findById(decoded.id);
+  if (!currentUser) {
+    return next(
+      new AppError("The user belonging to this token no longer exists.", 401)
+    );
+  }
+
+  // 4️⃣ Check if admin changed password after token was issued
+  if (currentUser.passwordChangedAt) {
+    const changedTimestamp = Math.floor(
+      currentUser.passwordChangedAt.getTime() / 1000
+    );
+    if (decoded.iat < changedTimestamp) {
+      return next(
+        new AppError(
+          "User recently changed password. Please log in again.",
+          401
+        )
+      );
+    }
+  }
+
+  // ✅ Grant access
+  req.admin = currentUser;
+  next();
+});

@@ -26,9 +26,7 @@ export const getMembers = async ({
 
   const response = await fetch(url, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    credentials: "include",
     cache: "no-store",
   });
 

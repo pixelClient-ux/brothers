@@ -22,7 +22,7 @@ export const updateProfile = catchAsync(async (req, res, next) => {
   if (email && email !== adminEmail) {
     const token = admin.generateEmailChangeToken(email);
     await admin.save({ validateBeforeSave: false });
-    const confirmUrl = `${process.env.NEXT_PUBLIC_API_URL}/confirm_email/${token}`;
+    const confirmUrl = `${process.env.CLIENT_URL}/confirm_email/${token}`;
     const emailHTML = confirmEmailChangeTemplate(
       confirmUrl,
       admin.fullName,

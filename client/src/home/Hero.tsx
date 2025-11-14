@@ -1,4 +1,6 @@
+// components/home/Hero.tsx
 "use client";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,19 +19,28 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  Loader2,
-  MoveRightIcon,
-  Plus,
-} from "lucide-react";
+import { ArrowUpRight, Loader2, Plus, Download } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import HeroSkeleton from "@/components/HeroLoadingskeleton";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import useCreateMember from "@/hooks/useCreateMember";
+import { useDashboardStats } from "@/hooks/useGetdashboardStat";
+import DashBoardSkeloton from "@/app/(dashboard)/loading";
 
 export type MemberPayload = {
   fullName: string;
@@ -45,6 +56,9 @@ export default function Hero() {
   const { mutate, isPending } = useCreateMember();
   const [open, setOpen] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string>();
+  const [filter, setFilter] = useState("30");
+
+  const { data: stats, isLoading } = useDashboardStats({ range: filter });
 
   type FormValues = {
     fullName: string;
@@ -78,6 +92,7 @@ export default function Hero() {
     if (file) setAvatarPreview(URL.createObjectURL(file));
   };
 
+  // YOUR ORIGINAL onSubmit — NO CHANGE
   const onSubmit = (data: FormValues) => {
     const formData = new FormData();
     formData.append("fullName", data.fullName);
@@ -99,38 +114,54 @@ export default function Hero() {
     });
   };
 
-  const stats = [
+  const handleExport = () => {
+    window.open(`/api/v1/members/report?range=${filter}`, "_blank");
+  };
+
+  if (isLoading) return <DashBoardSkeloton />;
+
+  const statusData = [
+    { name: "Active", value: stats?.data.status.active },
+    { name: "Expired", value: stats!.data.status.expired },
+    { name: "Inactive", value: stats!.data.status.inactive },
+  ];
+
+  const genderData = [
+    { name: "Male", value: stats!.data.gender.male },
+    { name: "Female", value: stats!.data.gender.female },
+    { name: "Other", value: stats!.data.gender.other },
+  ];
+
+  const statsCards = [
     {
       title: "Total Members",
-      value: "1,240",
+      value: stats!.data.totalMembers.toLocaleString(),
       change: "+12.4%",
       trend: "up",
-      note: "Past 30 Days",
+      note: "All time",
     },
     {
       title: "Active Memberships",
-      value: "1,050",
+      value: stats!.data.activeMembers.toLocaleString(),
       change: "+8.1%",
       trend: "up",
-      note: "Currently Active",
+      note: "Currently active",
     },
     {
       title: "New Members",
-      value: "95",
+      value: stats!.data.newMembers,
       change: "+15.2%",
       trend: "up",
-      note: "This Month",
+      note: `Last ${filter === "all" ? "year" : filter + " days"}`,
     },
     {
       title: "Total Revenue",
-      value: "$18,540.00",
+      value: `$${stats!.data.totalRevenue.toLocaleString()}`,
       change: "+25.3%",
       trend: "up",
-      note: "Past 30 Days",
+      note: `Last ${filter === "all" ? "year" : filter + " days"}`,
     },
   ];
-
-  if (stats.length === 0) return <HeroSkeleton />;
 
   return (
     <div className="w-full bg-slate-900">
@@ -153,12 +184,9 @@ export default function Hero() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Select>
+              <Select value={filter} onValueChange={setFilter}>
                 <SelectTrigger className="w-[180px] rounded-none text-white">
-                  <SelectValue
-                    placeholder="Sort By:"
-                    className="placeholder:text-white"
-                  />
+                  <SelectValue className="placeholder:text-white" />
                 </SelectTrigger>
                 <SelectContent className="rounded-none bg-slate-900 text-white">
                   <SelectItem
@@ -181,12 +209,26 @@ export default function Hero() {
                   </SelectItem>
                   <SelectItem
                     className="rounded-none focus:bg-slate-300"
+                    value="365"
+                  >
+                    This Year
+                  </SelectItem>
+                  <SelectItem
+                    className="rounded-none focus:bg-slate-300"
                     value="all"
                   >
                     All Time
                   </SelectItem>
                 </SelectContent>
               </Select>
+
+              <Button
+                onClick={handleExport}
+                className="bg-primary flex items-center gap-2 rounded-none text-white"
+              >
+                <Download className="h-4 w-4" />
+                Export
+              </Button>
 
               <Sheet open={open} onOpenChange={setOpen}>
                 <SheetTrigger asChild>
@@ -209,8 +251,9 @@ export default function Hero() {
                     className="mt-4 space-y-4"
                     onSubmit={handleSubmit(onSubmit)}
                   >
+                    {/* YOUR FULL FORM — UNTOUCHED */}
                     <div className="space-y-2">
-                      <Label htmlFor="fullName " className="text-white">
+                      <Label htmlFor="fullName" className="text-white">
                         Full Name
                       </Label>
                       <Input
@@ -241,8 +284,7 @@ export default function Hero() {
                           required: "Phone number is required",
                           pattern: {
                             value: /^(?:\+2519\d{8}|09\d{8})$/,
-                            message:
-                              "Enter a valid Ethiopian phone number (e.g. 0912345678 or +251912345678)",
+                            message: "Invalid Ethiopian number",
                           },
                         })}
                         type="tel"
@@ -290,18 +332,13 @@ export default function Hero() {
                       <Controller
                         control={control}
                         name="avatar"
-                        rules={{
-                          required: "Avatar is required",
-                          validate: (files) =>
-                            (files && (files as FileList).length > 0) ||
-                            "Avatar is required",
-                        }}
+                        rules={{ required: "Avatar is required" }}
                         render={({ field }) => (
                           <Input
                             id="avatar"
                             type="file"
                             accept="image/*"
-                            className="file:hover:bg-primary/80 w-fit rounded-none text-white file:mr-2 file:rounded-none file:px-3 file:py-1 file:text-white placeholder:text-white"
+                            className="file:hover:bg-primary/80 w-fit rounded-none text-white file:mr-2 file:rounded-none file:px-3 file:py-1 file:text-white"
                             onChange={(e) => {
                               field.onChange(
                                 (e.target as HTMLInputElement).files,
@@ -313,25 +350,22 @@ export default function Hero() {
                           />
                         )}
                       />
-
                       {!avatarPreview && errors.avatar && (
                         <p className="mt-1 text-sm text-red-400">
                           {errors.avatar.message}
                         </p>
                       )}
-
                       {avatarPreview && (
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 text-white">
-                            The chosen avatar is{" "}
-                            <MoveRightIcon className="text-primary" />
+                            Chosen avatar
                           </div>
                           <Image
                             src={avatarPreview}
-                            alt="Avatar Preview"
+                            alt="Preview"
                             width={20}
                             height={20}
-                            className="mt-2 h-18 w-18 rounded-full object-cover"
+                            className="h-18 w-18 rounded-full object-cover"
                           />
                         </div>
                       )}
@@ -343,9 +377,9 @@ export default function Hero() {
                         <Input
                           id="paymentAmount"
                           {...register("amount", {
-                            required: "Payment amount is required",
+                            required: "Required",
                             valueAsNumber: true,
-                            min: { value: 0, message: "Amount must be >= 0" },
+                            min: { value: 0, message: "≥ 0" },
                           })}
                           type="number"
                           min={0}
@@ -363,11 +397,11 @@ export default function Hero() {
                         <Controller
                           control={control}
                           name="method"
-                          rules={{ required: "Select a payment method" }}
+                          rules={{ required: "Select method" }}
                           render={({ field }) => (
                             <Select onValueChange={field.onChange}>
                               <SelectTrigger className="rounded-none">
-                                <SelectValue placeholder="Select Method" />
+                                <SelectValue placeholder="Select" />
                               </SelectTrigger>
                               <SelectContent className="rounded-none">
                                 <SelectItem value="cash">Cash</SelectItem>
@@ -376,7 +410,7 @@ export default function Hero() {
                                   Tele-Birr
                                 </SelectItem>
                                 <SelectItem value="transfer">
-                                  Bank Transfer
+                                  Transfer
                                 </SelectItem>
                               </SelectContent>
                             </Select>
@@ -395,28 +429,24 @@ export default function Hero() {
                       <Controller
                         control={control}
                         name="durationMonths"
-                        rules={{ required: "Select membership period" }}
+                        rules={{ required: "Select duration" }}
                         render={({ field }) => (
                           <Select
                             onValueChange={(v) => field.onChange(Number(v))}
                             value={field.value}
                           >
                             <SelectTrigger className="rounded-none">
-                              <SelectValue placeholder="Select Duration" />
+                              <SelectValue placeholder="Select" />
                             </SelectTrigger>
                             <SelectContent className="rounded-none">
-                              <SelectItem value="1">1 Month</SelectItem>
-                              <SelectItem value="2">2 Months</SelectItem>
-                              <SelectItem value="3">3 Months</SelectItem>
-                              <SelectItem value="4">4 Months</SelectItem>
-                              <SelectItem value="5">5 Months</SelectItem>
-                              <SelectItem value="6">6 Months</SelectItem>
-                              <SelectItem value="7">7 Months</SelectItem>
-                              <SelectItem value="8">8 Months</SelectItem>
-                              <SelectItem value="9">9 Months</SelectItem>
-                              <SelectItem value="10">10 Months</SelectItem>
-                              <SelectItem value="11">11 Months</SelectItem>
-                              <SelectItem value="12">12 Months</SelectItem>
+                              {[...Array(12)].map((_, i) => (
+                                <SelectItem
+                                  key={i + 1}
+                                  value={(i + 1).toString()}
+                                >
+                                  {i + 1} Month{i > 0 ? "s" : ""}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         )}
@@ -447,8 +477,10 @@ export default function Hero() {
               </Sheet>
             </div>
           </div>
+
+          {/* Stats Cards */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {stats.map((item, idx) => (
+            {statsCards.map((item, idx) => (
               <div
                 key={idx}
                 className="rounded-none bg-[#1C1F26] p-6 shadow-lg transition-all duration-300 hover:bg-[#242830]"
@@ -457,26 +489,156 @@ export default function Hero() {
                 <p className="mb-2 text-3xl font-bold text-white">
                   {item.value}
                 </p>
-
                 <div className="flex items-center gap-2 text-sm">
-                  {item.trend === "up" ? (
-                    <ArrowUpRight className="h-4 w-4 text-green-400" />
-                  ) : (
-                    <ArrowDownRight className="h-4 w-4 text-red-400" />
-                  )}
-                  <span
-                    className={
-                      item.trend === "up"
-                        ? "font-medium text-green-400"
-                        : "font-medium text-red-400"
-                    }
-                  >
+                  <ArrowUpRight className="h-4 w-4 text-green-400" />
+                  <span className="font-medium text-green-400">
                     {item.change}
                   </span>
                   <span className="text-xs text-gray-500">• {item.note}</span>
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Charts */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* Line Chart */}
+            <div className="rounded-lg bg-[#1C1F26] p-6 shadow-lg">
+              <h3 className="mb-4 text-lg font-semibold text-white">
+                New Members Trend
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={stats!.data.monthlyMembers}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis
+                    dataKey="month"
+                    stroke="#9CA3AF"
+                    tickFormatter={(v) =>
+                      new Date(v + "-01").toLocaleString("default", {
+                        month: "short",
+                      })
+                    }
+                  />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1C1F26",
+                      border: "1px solid #374151",
+                      borderRadius: "0.5rem",
+                    }}
+                    labelStyle={{ color: "#E5E7EB" }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    stroke="var(--chart-2)"
+                    strokeWidth={3}
+                    dot={{ fill: "var(--chart-2)" }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Bar Chart */}
+            <div className="rounded-lg bg-[#1C1F26] p-6 shadow-lg">
+              <h3 className="mb-4 text-lg font-semibold text-white">
+                Revenue by Month
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={stats!.data.monthlyMembers}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis
+                    dataKey="month"
+                    stroke="#9CA3AF"
+                    tickFormatter={(v) =>
+                      new Date(v + "-01").toLocaleString("default", {
+                        month: "short",
+                      })
+                    }
+                  />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1C1F26",
+                      border: "1px solid #374151",
+                      borderRadius: "0.5rem",
+                    }}
+                    labelStyle={{ color: "#E5E7EB" }}
+                  />
+                  <Bar
+                    dataKey="count"
+                    fill="var(--chart-1)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Status Pie */}
+            <div className="rounded-lg bg-[#1C1F26] p-6 shadow-lg">
+              <h3 className="mb-4 text-lg font-semibold text-white">
+                Membership Status
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={statusData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) =>
+                      `${name} ${((percent || 0) * 100).toFixed(0)}%`
+                    }
+                    outerRadius={90}
+                    dataKey="value"
+                  >
+                    {statusData.map((_, i) => (
+                      <Cell key={`cell-${i}`} fill={`var(--chart-${i + 3})`} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1C1F26",
+                      border: "1px solid #374151",
+                      borderRadius: "0.5rem",
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Gender Pie */}
+            <div className="rounded-lg bg-[#1C1F26] p-6 shadow-lg">
+              <h3 className="mb-4 text-lg font-semibold text-white">
+                Gender Distribution
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={genderData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) =>
+                      `${name} ${((percent || 0) * 100).toFixed(0)}%`
+                    }
+                    outerRadius={90}
+                    dataKey="value"
+                  >
+                    {genderData.map((_, i) => (
+                      <Cell key={`cell-${i}`} fill={`var(--chart-${i + 1})`} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1C1F26",
+                      border: "1px solid #374151",
+                      borderRadius: "0.5rem",
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       </div>

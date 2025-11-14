@@ -8,6 +8,7 @@ export default async function login(data: loginType) {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify(data),
     },
   );
