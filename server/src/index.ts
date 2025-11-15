@@ -6,18 +6,19 @@ import morgan from "morgan";
 import { globalErrorHandler } from "./controller/errorController.js";
 import memberRouter from "./router/memberRouter.js";
 import adminRouter from "./router/adminRouter.js";
+import reportRouter from "./router/reportRouter.js";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 dotenv.config();
 const app = express();
-
+app.use(cookieParser());
 app.use(
   cors({
     origin: "http://localhost:3000",
     credentials: true,
   })
 );
-app.use(cookieParser());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
@@ -29,6 +30,7 @@ app.use(express.static(publicDir));
 
 app.use("/api/v1/members", memberRouter);
 app.use("/api/v1/admins", adminRouter);
+app.use("/api/v1/reports", reportRouter);
 
 app.all("/{*any}", (req, res, next) => {
   res.status(404).json({

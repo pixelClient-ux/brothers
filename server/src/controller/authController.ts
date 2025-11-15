@@ -9,7 +9,6 @@ import jwt, { type JwtPayload } from "jsonwebtoken";
 import { Document, Types } from "mongoose";
 import { welcomeEmailTemplate } from "../utils/welcomeTemplateEmail.js";
 import dotenv from "dotenv";
-import type { CookieOptions } from "express";
 dotenv.config();
 interface DecodedToken extends JwtPayload {
   id: string;
@@ -42,21 +41,13 @@ const createSendToken = (
 ) => {
   const token = signToken(admin._id);
 
-  const cookieOptions: CookieOptions = {
-    expires: new Date(
-      Date.now() +
-        parseInt(process.env.JWT_COOKIES_EXPIRES_IN as string) *
-          24 *
-          60 *
-          60 *
-          1000
-    ),
+  res.cookie("jwt", token, {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
-  };
-
-  res.cookie("jwt", token, cookieOptions);
+    secure: true, // Now valid because HTTPS
+    sameSite: "none", // Allows cross-site (e.g. frontend on port 3000, API on 3001)
+    path: "/",
+    maxAge: 86400000,
+  });
 
   (admin as any).password = undefined;
 

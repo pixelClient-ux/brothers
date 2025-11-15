@@ -41,6 +41,7 @@ import {
 import useCreateMember from "@/hooks/useCreateMember";
 import { useDashboardStats } from "@/hooks/useGetdashboardStat";
 import DashBoardSkeloton from "@/app/(dashboard)/loading";
+import useGenerateDashboardReport from "@/hooks/useGeneratedadhboardReport";
 
 export type MemberPayload = {
   fullName: string;
@@ -54,6 +55,7 @@ export type MemberPayload = {
 
 export default function Hero() {
   const { mutate, isPending } = useCreateMember();
+  const { mutate: reportMuatet } = useGenerateDashboardReport();
   const [open, setOpen] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string>();
   const [filter, setFilter] = useState("30");
@@ -115,7 +117,7 @@ export default function Hero() {
   };
 
   const handleExport = () => {
-    window.open(`/api/v1/members/report?range=${filter}`, "_blank");
+    reportMuatet.mutate({ range: filter });
   };
 
   if (isLoading) return <DashBoardSkeloton />;

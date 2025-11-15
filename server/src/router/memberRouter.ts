@@ -2,7 +2,6 @@ import express from "express";
 import {
   createMember,
   deleteMember,
-  generateReport,
   getDashboardStats,
   getMemebr,
   getMemebrs,
@@ -13,12 +12,12 @@ import {
   resizeMemberAvatar,
   upload,
 } from "../middleware/uploadMemberAvatar.js";
+import { protect } from "../controller/authController.js";
 
 const router = express.Router();
 router
   .get("/", getMemebrs)
   .get("/stats", getDashboardStats)
-  .get("/reports", generateReport)
   .post("/create", upload.single("avatar"), resizeMemberAvatar, createMember)
   .get("/:memberId", getMemebr)
   .delete("/:memberId", deleteMember)

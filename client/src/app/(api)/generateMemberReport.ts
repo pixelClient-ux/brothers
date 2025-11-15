@@ -20,7 +20,7 @@ export const generateReport = async ({ searchParams }: GetMemberProps) => {
   if (searchParams.range) query.append("range", searchParams.range);
   if (searchParams.search) query.append("search", searchParams.search);
 
-  const url = `${process.env.NEXT_PUBLIC_API_URL}/members/reports?${query.toString()}`;
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/memebr-report?${query.toString()}`;
 
   try {
     const response = await fetch(url, {

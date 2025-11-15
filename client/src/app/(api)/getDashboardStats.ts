@@ -29,5 +29,6 @@ export const getDashboardStats = async ({
   }
 
   const result: GetDashboardStatsResponse = await response.json();
+  console.log(result);
   return result;
 };
