@@ -15,6 +15,7 @@ import {
 import { protect } from "../controller/authController.js";
 
 const router = express.Router();
+router.use(protect);
 router
   .get("/", getMemebrs)
   .get("/stats", getDashboardStats)

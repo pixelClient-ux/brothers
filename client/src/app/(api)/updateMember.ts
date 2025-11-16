@@ -11,6 +11,7 @@ export const updateMember = async ({ data, memberId }: updatedMemberProps) => {
     `${process.env.NEXT_PUBLIC_API_URL}/members/updateMember/${memberId}`,
     {
       method: "PATCH",
+      credentials: "include",
       body: data,
     },
   );

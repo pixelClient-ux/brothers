@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   Settings,
   LogOut,
-  BarChart,
 } from "lucide-react";
 import {
   Sidebar,
@@ -24,17 +23,21 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
+import useLogout from "@/hooks/useLogout";
 
 export default function GymSidebar() {
+  const { mutate } = useLogout();
   const pathname = usePathname();
 
   const navItems = [
     { title: "Dashboard", icon: LayoutDashboard, href: "/" },
     { title: "Members", icon: Users, href: "/members" },
-    { title: "Reports", icon: BarChart, href: "/report" },
     { title: "Settings", icon: Settings, href: "/settings" },
   ];
 
+  function handlSignout() {
+    mutate();
+  }
   return (
     <Sidebar
       side="left"
@@ -86,7 +89,11 @@ export default function GymSidebar() {
 
       {/* Footer */}
       <SidebarFooter className="border-t bg-gray-900 p-4">
-        <Button variant="link" className="cursor-pointer">
+        <Button
+          variant="link"
+          className="cursor-pointer"
+          onClick={handlSignout}
+        >
           <LogOut className="mr-2 h-5 w-5" />
           Sign Out
         </Button>

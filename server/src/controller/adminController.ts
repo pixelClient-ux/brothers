@@ -12,41 +12,46 @@ export const updateProfile = catchAsync(async (req, res, next) => {
   const admin = await Admin.findById(adminId);
 
   if (!admin) {
-    return next(new AppError("Admin is not found", 404));
+    return next(new AppError("Admin not found", 404));
   }
-  const adminEmail = admin.email;
-  if (fullName && fullName !== admin?.fullName) {
+
+  if (fullName && fullName !== admin.fullName) {
     admin.fullName = fullName;
   }
 
-  if (email && email !== adminEmail) {
+  if (req.body.avatar) {
+    admin.avatar = req.body.avatar;
+  }
+
+  if (email && email !== admin.email) {
     const token = admin.generateEmailChangeToken(email);
     await admin.save({ validateBeforeSave: false });
+
     const confirmUrl = `${process.env.CLIENT_URL}/confirm_email/${token}`;
     const emailHTML = confirmEmailChangeTemplate(
       confirmUrl,
       admin.fullName,
       email
     );
+
     await sendEmail({
-      email: adminEmail,
+      email: email,
       subject: "Confirm your new email address",
       html: emailHTML,
     });
+
     return res.status(200).json({
       status: "success",
       message:
         "A confirmation email has been sent to your new address. Please verify to complete the change.",
     });
   }
-  if (req.body.avatar) {
-    admin.avatar = req.body.avatar;
-  }
-  await admin.save();
+
+  await admin.save({ validateBeforeSave: false });
 
   res.status(200).json({
     status: "success",
-    message: "your data is updated successfully",
+    message: "Profile updated successfully",
   });
 });
 
@@ -95,18 +100,17 @@ export const updatePassword = catchAsync(async (req, res, next) => {
   }
 
   const admin = await Admin.findById(adminId).select("+password");
-
   if (!admin) {
     return next(new AppError("Admin not found", 404));
   }
 
-  const isMatch = await admin.comparePassword(newPassword, admin.password);
+  const isMatch = await admin.comparePassword(currentPassword, admin.password);
   if (!isMatch) {
     return next(new AppError("Current password is incorrect", 401));
   }
 
   admin.password = newPassword;
-  (admin as any).passwordConfirm = undefined;
+  admin.passwordConfirm = confirmPassword;
   await admin.save();
 
   try {
@@ -116,9 +120,7 @@ export const updatePassword = catchAsync(async (req, res, next) => {
       subject: "Your password has been changed",
       html: emailHTML,
     });
-  } catch (err) {
-    console.error("Failed to send password change email:", err);
-  }
+  } catch (err) {}
 
   res.status(200).json({
     status: "success",

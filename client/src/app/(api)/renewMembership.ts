@@ -10,6 +10,7 @@ export const renewMembership = async ({ data, memberId }: RenewMemberProps) => {
       `${process.env.NEXT_PUBLIC_API_URL}/members/renew/${memberId}`,
       {
         method: "PATCH",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },

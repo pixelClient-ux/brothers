@@ -2,9 +2,10 @@ import { updatePasswordType } from "@/hooks/useUpdatePassword";
 
 export default async function upadtePassword(data: updatePasswordType) {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/admins/update-profile`,
+    `${process.env.NEXT_PUBLIC_API_URL}/admins/update-password`,
     {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
       },

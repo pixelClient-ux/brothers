@@ -2,14 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Dumbbell,
-  LayoutDashboard,
-  Users,
-  Settings,
-  BarChart,
-  Menu,
-} from "lucide-react";
+import { Dumbbell, LayoutDashboard, Users, Settings, Menu } from "lucide-react";
 import { useState } from "react";
 import clsx from "clsx";
 import {
@@ -18,14 +11,12 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetClose,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
   { title: "Members", href: "/members", icon: Users },
-  { title: "Reports", href: "/report", icon: BarChart },
   { title: "Settings", href: "/settings", icon: Settings },
 ];
 

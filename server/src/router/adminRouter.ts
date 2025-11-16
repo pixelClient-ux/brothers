@@ -1,8 +1,12 @@
 import express from "express";
-import { updateProfile } from "../controller/adminController.js";
+import {
+  updatePassword,
+  updateProfile,
+} from "../controller/adminController.js";
 import {
   forgetPassword,
   login,
+  logout,
   protect,
   resetPassword,
   signUp,
@@ -19,6 +23,8 @@ router
   .post("/login", login)
   .post("/forget-password", forgetPassword)
   .post("/reset-password/:token", resetPassword)
+  .post("/update-password", protect, updatePassword)
+  .post("/logout", protect, logout)
   .patch(
     "/update-profile",
     protect,

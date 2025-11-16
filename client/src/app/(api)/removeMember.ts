@@ -4,6 +4,7 @@ export const removeMember = async (memberId: string) => {
       `${process.env.NEXT_PUBLIC_API_URL}/members/${memberId}`,
       {
         method: "DELETE",
+        credentials: "include",
       },
     );
 

@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useUpdateAdminProfile } from "@/hooks/useUpdateAdminProfile";
 import { Loader2 } from "lucide-react";
+import { useUpdatePassword } from "@/hooks/useUpdatePassword";
 
 type PersonalInfoForm = {
   fullName: string;
@@ -22,11 +23,14 @@ type PasswordForm = {
 
 export default function Settings() {
   const { mutate, isPending } = useUpdateAdminProfile();
+  const { mutate: updatePassword, isPending: IsUpdatingPassword } =
+    useUpdatePassword();
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [profileFile, setProfileFile] = useState<File | null>(null);
   const {
     register: registerInfo,
     handleSubmit: handleInfoSubmit,
+    reset,
     formState: { errors: infoErrors },
   } = useForm<PersonalInfoForm>({
     defaultValues: {
@@ -35,7 +39,6 @@ export default function Settings() {
     },
   });
 
-  // Password form
   const {
     register: registerPassword,
     handleSubmit: handlePasswordSubmit,
@@ -53,20 +56,28 @@ export default function Settings() {
     const file = e.target.files?.[0];
     if (file) {
       setProfileFile(file);
-      setProfileImage(URL.createObjectURL(file)); // preview
+      setProfileImage(URL.createObjectURL(file));
     }
   };
 
   const onPersonalInfoSubmit = (data: PersonalInfoForm) => {
     const formData = new FormData();
-    formData.append("fullName", data.fullName);
-    formData.append("email", data.email);
+    if (data.fullName.trim() !== "") formData.append("fullName", data.fullName);
+    if (data.email.trim() !== "") formData.append("email", data.email);
     if (profileFile) formData.append("avatar", profileFile);
-    mutate(formData);
+    mutate(formData, {
+      onSuccess: () => {
+        reset();
+      },
+    });
   };
 
   const onPasswordSubmit = (data: PasswordForm) => {
-    console.log("Password Change Submitted:", data);
+    updatePassword(data, {
+      onSuccess: () => {
+        reset();
+      },
+    });
   };
 
   return (
@@ -117,7 +128,6 @@ export default function Settings() {
               <Input
                 id="fullName"
                 {...registerInfo("fullName", {
-                  required: "Full Name is required",
                   minLength: { value: 3, message: "Minimum 3 characters" },
                 })}
                 className="rounded-none"
@@ -134,7 +144,6 @@ export default function Settings() {
               <Input
                 id="email"
                 {...registerInfo("email", {
-                  required: "Email is required",
                   pattern: {
                     value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
                     message: "Invalid email address",
@@ -165,7 +174,6 @@ export default function Settings() {
         </form>
       </div>
 
-      {/* Change Password */}
       <div className="space-y-4">
         <h2 className="text-lg font-medium">Change Password</h2>
         <p className="text-gray-300">
@@ -181,9 +189,7 @@ export default function Settings() {
             <Input
               id="currentPassword"
               type="password"
-              {...registerPassword("currentPassword", {
-                required: "Current password is required",
-              })}
+              {...registerPassword("currentPassword")}
               className="rounded-none"
             />
             {passwordErrors.currentPassword && (
@@ -200,7 +206,6 @@ export default function Settings() {
                 id="newPassword"
                 type="password"
                 {...registerPassword("newPassword", {
-                  required: "New password is required",
                   minLength: { value: 6, message: "Minimum 6 characters" },
                 })}
                 className="rounded-none"
@@ -218,7 +223,6 @@ export default function Settings() {
                 id="confirmPassword"
                 type="password"
                 {...registerPassword("confirmPassword", {
-                  required: "Confirm password is required",
                   validate: (val) =>
                     val === watch("newPassword") || "Passwords do not match",
                 })}
@@ -232,8 +236,15 @@ export default function Settings() {
             </div>
           </div>
           <div className="flex w-full justify-end">
-            <Button type="submit" className="bg-primary rounded-none">
-              Update Password
+            <Button
+              type="submit"
+              disabled={IsUpdatingPassword}
+              className="bg-primary flex items-center justify-center gap-2 rounded-none"
+            >
+              {IsUpdatingPassword && (
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
+              )}
+              {isPending ? "Updating..." : "Update Password"}
             </Button>
           </div>
         </form>

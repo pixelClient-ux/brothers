@@ -96,6 +96,19 @@ export const login = catchAsync(async (req, res, next) => {
   createSendToken(admin, 200, res, "Logged in successfully!");
 });
 
+export const logout = catchAsync(async (req, res, next) => {
+  res.cookie("jwt", "", {
+    httpOnly: true,
+    expires: new Date(0),
+    secure: true,
+    sameSite: "none",
+  });
+
+  res.status(200).json({
+    status: "success",
+  });
+});
+
 export const VerifyAdmin = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!roles.includes(req.admin.roles)) {
@@ -170,8 +183,6 @@ export const resetPassword = catchAsync(async (req, res, next) => {
 export const protect = catchAsync(async (req, res, next) => {
   // 1️⃣ Get token from cookie
   const token = req.cookies?.jwt;
-  console.log("request Cookis😁💥", req.cookies);
-  console.log("request header💥", req.headers);
 
   if (!token) {
     return next(

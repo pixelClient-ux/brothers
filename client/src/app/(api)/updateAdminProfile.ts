@@ -3,6 +3,7 @@ export const updateAdminProfile = async (updatedData: FormData) => {
     `${process.env.NEXT_PUBLIC_API_URL}/admins/update-profile`,
     {
       method: "PATCH",
+      credentials: "include",
       body: updatedData,
     },
   );

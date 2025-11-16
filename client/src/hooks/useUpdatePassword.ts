@@ -7,7 +7,7 @@ export interface updatePasswordType {
   confirmPassword: string;
 }
 export const useUpdatePassword = () => {
-  const mutate = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: (data: updatePasswordType) => upadtePassword(data),
     onSuccess: () => {
       toast.success("You have successfully updated your password");
@@ -17,5 +17,5 @@ export const useUpdatePassword = () => {
     },
   });
 
-  return { mutate };
+  return { mutate, isPending };
 };
