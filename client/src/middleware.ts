@@ -2,14 +2,23 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
-  const jwt = req.cookies.get("jwt");
-  const isAuthPage = req.nextUrl.pathname.startsWith("/login");
-  console.log(jwt);
-  if (!jwt && !isAuthPage) {
+  const jwt = req.cookies.get("jwt")?.value;
+  const pathname = req.nextUrl.pathname;
+
+  // Public routes that don't require authentication
+  const publicRoutes = ["/login", "/signup", "/forgotpassword"];
+
+  const isPublicRoute = publicRoutes.some((route) =>
+    pathname.startsWith(route),
+  );
+
+  // If user is not authenticated and trying to access a protected page
+  if (!jwt && !isPublicRoute) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (jwt && isAuthPage) {
+  // If user is authenticated and tries to access a public page like login/signup
+  if (jwt && isPublicRoute) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 

@@ -44,13 +44,12 @@ export default function GymSidebar() {
       className="border-r border-gray-800 bg-[#1C1F26] text-white"
     >
       <SidebarHeader className="border-b bg-gray-900">
-        <div className="flex items-center gap-2 px-3 py-4">
+        <Link href="/" className="flex items-center gap-2 px-3 py-4">
           <Dumbbell className="text-primary h-6 w-6" />
           <h1 className="text-lg font-bold">Gym-Fitness</h1>
-        </div>
+        </Link>
       </SidebarHeader>
 
-      {/* Main Navigation */}
       <SidebarContent className="bg-gray-800">
         <SidebarGroup>
           <SidebarGroupLabel className="text-gray-400">Main</SidebarGroupLabel>
@@ -87,7 +86,6 @@ export default function GymSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* Footer */}
       <SidebarFooter className="border-t bg-gray-900 p-4">
         <Button
           variant="link"
