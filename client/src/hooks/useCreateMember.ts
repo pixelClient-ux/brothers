@@ -7,9 +7,10 @@ export default function useCreateMember() {
     mutationFn: (userData: FormData) => createMember(userData),
     onSuccess: () => {
       toast.success("Member created successfully");
-      window.location.reload()
+      window.location.reload();
     },
     onError: (error) => {
+      console.log(error);
       toast.error(error.message);
     },
   });

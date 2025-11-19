@@ -6,13 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dumbbell, Lock } from "lucide-react";
 import Link from "next/link";
+import useResetPassword from "@/hooks/useResetPassword";
 
 type ResetFormData = {
   password: string;
-  confirmPassword: string;
+  passwordConfirm: string;
 };
 
-export default function ResetPassword() {
+export default function ResetPasswordClient({ token }: { token: string }) {
+  const { mutate, isPending } = useResetPassword();
   const {
     register,
     handleSubmit,
@@ -21,8 +23,7 @@ export default function ResetPassword() {
   } = useForm<ResetFormData>();
 
   const onSubmit = (data: ResetFormData) => {
-    console.log("Password Reset Data:", data);
-    // here you can call your API for resetting password
+    mutate({ ...data, token });
   };
 
   const password = watch("password");
@@ -73,7 +74,7 @@ export default function ResetPassword() {
 
           {/* Confirm Password */}
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-sm font-medium">
+            <Label htmlFor="passwordConfirm" className="text-sm font-medium">
               Confirm Password
             </Label>
             <div className="focus-within:ring-primary/60 flex w-full items-center gap-2 rounded-none border px-7 py-1 focus-within:ring-2">
@@ -83,16 +84,16 @@ export default function ResetPassword() {
                 type="password"
                 className="w-full border-none bg-transparent px-0 py-0 shadow-none focus-visible:ring-0"
                 placeholder="Confirm new password"
-                {...register("confirmPassword", {
+                {...register("passwordConfirm", {
                   required: "Please confirm your password",
                   validate: (value) =>
                     value === password || "Passwords do not match",
                 })}
               />
             </div>
-            {errors.confirmPassword && (
+            {errors.passwordConfirm && (
               <p className="text-sm text-red-500">
-                {errors.confirmPassword.message}
+                {errors.passwordConfirm.message}
               </p>
             )}
           </div>

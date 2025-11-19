@@ -7,79 +7,78 @@ import { newMemberTemplate } from "../utils/newMemberTemplate.js";
 import sendEmail from "../utils/sendEmail.js";
 import dotenv from "dotenv";
 import { renewMemberTemplate } from "../utils/renewMemberTemplate.js";
+import { generateMembershipCard } from "../utils/generateMembershipCard.js";
 dotenv.config();
 
-function addMonthsKeepEndOfMonth(date: Date, months: number) {
-  const origDay = date.getDate();
-  const targetYear = date.getFullYear();
-  const targetMonthIndex = date.getMonth() + months;
-  const lastDayOfTargetMonth = new Date(
-    targetYear,
-    targetMonthIndex + 1,
-    0
-  ).getDate();
-  const day = Math.min(origDay, lastDayOfTargetMonth);
-  return new Date(targetYear, targetMonthIndex, day, 23, 59, 59, 999);
-}
-
 export const createMember = catchAsync(async (req, res, next) => {
-  const { fullName, phone, gender, avatar } = req.body;
-  console.log("AVatar url", avatar);
-  let { durationMonths, amount, method } = req.body;
-  durationMonths = Number(durationMonths);
-  amount = Number(amount);
-
-  console.log(req.body);
-  const exitingUser = await Member.findOne({ phone });
-  if (exitingUser) {
-    return next(new AppError("Member with this phone already exists", 409));
-  }
-  durationMonths = Number(durationMonths);
-  amount = Number(amount);
-  method = method;
-
-  const now = new Date();
-  const startDate = now;
-  const endDate = addMonthsKeepEndOfMonth(startDate, durationMonths);
-  const payment = { amount, date: now, method };
-
-  const newMember = await Member.create({
+  const {
     fullName,
     phone,
     gender,
     avatar,
-    payments: [payment],
-    membership: {
-      startDate,
-      endDate,
-      durationMonths,
-      status: "active",
-    },
-    isActive: true,
+    durationMonths = 12,
+    amount,
+    method = "cash",
+  } = req.body;
+
+  if (!fullName || !phone || !gender) {
+    return next(new AppError("Full name, phone, and gender are required", 400));
+  }
+
+  const existingMember = await Member.findOne({ phone });
+  if (existingMember) {
+    return next(new AppError("Member with this phone already exists", 409));
+  }
+
+  const member = await Member.create({
+    fullName: fullName.trim(),
+    phone: phone.trim(),
+    gender,
+    avatar: avatar || "/images/profile.png",
   });
+
+  const monthsToAdd = Number(durationMonths);
+  const paymentAmount = Number(amount);
+
+  await member.renewMembership(monthsToAdd, paymentAmount, method);
+
+  const pdfBuffer = await generateMembershipCard(member);
+
   const adminEmail = process.env.EMAIL_USERNAME;
+  console.log("Admin Email:", adminEmail);
   if (adminEmail) {
-    const html = newMemberTemplate({
-      fullName,
-      phone,
-      gender,
-      startDate,
-      endDate,
-      durationMonths,
-      amount,
-      method,
-    });
     await sendEmail({
       email: adminEmail,
-      subject: `New Member Joined: ${fullName}`,
-      html,
+      subject: `New Member: ${member.fullName} (${member.memberCode})`,
+      html: newMemberTemplate({
+        fullName: member.fullName,
+        phone: member.phone,
+        gender: member.gender,
+        memberCode: member.memberCode,
+        startDate: member.membership!.startDate!,
+        endDate: member.membership!.endDate!,
+        durationMonths: member.membership!.durationMonths!,
+        amount: paymentAmount,
+        method,
+      }),
+      attachments: [
+        {
+          filename: `${member.memberCode}_membership_card.pdf`,
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        },
+      ],
     });
   }
 
-  res.status(200).json({
+  res.status(201).json({
     status: "success",
-    message: "Member created successfully",
-    data: newMember,
+    message: "Member created and membership activated successfully",
+    data: {
+      member,
+      cardGenerated: true,
+      emailSent: !!adminEmail,
+    },
   });
 });
 
@@ -360,4 +359,3 @@ export const deleteMember = catchAsync(async (req, res, next) => {
     message: "Member removed successfully",
   });
 });
-

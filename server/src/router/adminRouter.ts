@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  confirmEmailChange,
   updatePassword,
   updateProfile,
 } from "../controller/adminController.js";
@@ -24,7 +25,9 @@ router
   .post("/forget-password", forgetPassword)
   .post("/reset-password/:token", resetPassword)
   .post("/update-password", protect, updatePassword)
+
   .post("/logout", protect, logout)
+  .post("/confirm-email/:token", protect, confirmEmailChange)
   .patch(
     "/update-profile",
     protect,

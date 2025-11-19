@@ -129,9 +129,7 @@ export const forgetPassword = catchAsync(async (req, res, next) => {
   const resetToken = admin.createPasswordResetToken();
   await admin.save({ validateBeforeSave: false });
 
-  const resetURL = `${req.protocol}://${req.get(
-    "host"
-  )}/api/v1/admin/resetPassword/${resetToken}`;
+  const resetURL = `${process.env.CLIENT_URL}/resetPassword/${resetToken}`;
   const html = resetPasswordTemplate(resetURL);
 
   try {

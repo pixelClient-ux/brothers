@@ -1,6 +1,6 @@
 import mongoose, { Schema, model, Document, Model } from "mongoose";
 import type { HydratedDocument, Query } from "mongoose";
-
+import { nanoid } from "nanoid";
 /* -------------------------------------------------
    Ethiopian Calendar helpers
    ------------------------------------------------- */
@@ -138,6 +138,7 @@ export interface IMember {
     durationMonths?: number;
     status?: string;
   };
+  memberCode: string;
   isDeleted: boolean;
   deletedAt: Date;
 }
@@ -162,6 +163,11 @@ const memberSchema = new Schema<IMemberDocument, MemberModel>(
     avatar: { type: String, default: "/images/profile.png" },
     isActive: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
+    memberCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
     deletedAt: Date,
     payments: [
       {
@@ -193,6 +199,13 @@ const memberSchema = new Schema<IMemberDocument, MemberModel>(
    ------------------------------------------------- */
 memberSchema.pre(/^find/, function (this: Query<any, any>, next) {
   this.where({ isDeleted: { $ne: true } });
+  next();
+});
+
+memberSchema.pre("save", function (next) {
+  if (!this.memberCode && this.isNew) {
+    this.memberCode = `MEM-${nanoid(8).toUpperCase()}`;
+  }
   next();
 });
 

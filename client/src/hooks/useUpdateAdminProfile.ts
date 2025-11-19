@@ -5,8 +5,10 @@ import toast from "react-hot-toast";
 export function useUpdateAdminProfile() {
   const { mutate, isPending } = useMutation({
     mutationFn: (adminData: FormData) => updateAdminProfile(adminData),
-    onSuccess: () => {
-      toast.success("You have successfully update your personal infromation");
+    onSuccess: (data) => {
+      toast.success(
+        data || "You have successfully update your personal infromation",
+      );
     },
     onError: (err) => {
       toast.error(err.message || "Somethin went wrong ,please try agin");

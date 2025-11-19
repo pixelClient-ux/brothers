@@ -1,22 +1,32 @@
-export function newMemberTemplate({
-  fullName,
-  phone,
-  gender,
-  startDate,
-  endDate,
-  durationMonths,
-  amount,
-  method,
-}: {
+// utils/newMemberTemplate.ts
+
+interface NewMemberTemplateData {
   fullName: string;
   phone: string;
-  gender: string;
+  gender: "male" | "female";
+  memberCode: string;
   startDate: Date;
   endDate: Date;
   durationMonths: number;
-  amount: number;
-  method: string;
-}) {
+  amount?: number; // optional (free trials)
+  method?: string;
+}
+
+export function newMemberTemplate(data: NewMemberTemplateData): string {
+  const formatDate = (date: Date) =>
+    date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+
+  const amountDisplay =
+    data.amount !== undefined
+      ? `${data.amount.toLocaleString()} ETB`
+      : "Free / Trial";
+
+  const methodDisplay = data.method || "Cash";
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -24,32 +34,30 @@ export function newMemberTemplate({
     <meta charset="UTF-8" />
     <meta name="color-scheme" content="light dark" />
     <meta name="supported-color-schemes" content="light dark" />
-    <title>New Member Added</title>
+    <title>New Member • Gym Fitness</title>
     <style>
-      /* === Theme Colors (from your CSS) === */
+      /* Theme Colors (kept from your design) */
       :root {
         --primary: oklch(70.755% 0.19742 46.444);
-        --background: oklch(1 0 0);
-        --foreground: oklch(0.141 0.005 285.823);
-        --card: oklch(1 0 0);
-        --muted: oklch(0.967 0.001 286.375);
-        --border: oklch(0.92 0.004 286.32);
-        --accent: oklch(0.967 0.001 286.375);
+        --background: #ffffff;
+        --foreground: #0f172a;
+        --card: #ffffff;
+        --muted: #f8fafc;
+        --border: #e2e8f0;
       }
       @media (prefers-color-scheme: dark) {
         :root {
           --primary: oklch(0.78 0.18 50);
-          --background: oklch(0.141 0.005 285.823);
-          --foreground: oklch(0.985 0 0);
-          --card: oklch(0.21 0.006 285.885);
-          --muted: oklch(0.274 0.006 286.033);
-          --border: oklch(1 0 0 / 10%);
-          --accent: oklch(0.274 0.006 286.033);
+          --background: #0f172a;
+          --foreground: #f1f5f9;
+          --card: #1e293b;
+          --muted: #1e293b;
+          --border: #334155;
         }
       }
 
       body {
-        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         background: var(--background);
         color: var(--foreground);
         margin: 0;
@@ -57,47 +65,63 @@ export function newMemberTemplate({
       }
 
       .email-wrapper {
-        max-width: 600px;
-        margin: 24px auto;
+        max-width: 680px;
+        margin: 28px auto;
         border-radius: 12px;
         overflow: hidden;
         border: 1px solid var(--border);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        box-shadow: 0 8px 30px rgba(2,6,23,0.08);
         background: var(--card);
       }
 
       .header {
         background: var(--primary);
-        color: var(--foreground);
+        color: #ffffff;
         text-align: center;
-        padding: 24px;
+        padding: 28px 20px;
       }
 
       .header h1 {
         margin: 0;
-        font-size: 1.5rem;
-        color: white;
+        font-size: 1.6rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
       }
 
       .content {
-        padding: 24px;
+        padding: 22px 26px;
+      }
+
+      .intro {
+        margin-bottom: 14px;
+        font-size: 1rem;
+      }
+
+      .member-id {
+        display: inline-block;
+        margin-top: 12px;
+        padding: 10px 14px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        font-weight: 700;
+        color: var(--primary);
       }
 
       .section-title {
-        font-weight: 600;
-        font-size: 1.1rem;
-        margin-top: 1rem;
-        margin-bottom: 0.5rem;
+        font-weight: 700;
+        font-size: 1.05rem;
+        margin: 18px 0 8px;
       }
 
       table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 0.95rem;
+        font-size: 0.97rem;
       }
 
       td {
-        padding: 8px 4px;
+        padding: 10px 6px;
         vertical-align: top;
       }
 
@@ -105,53 +129,119 @@ export function newMemberTemplate({
         border-bottom: 1px solid var(--border);
       }
 
+      .label {
+        width: 170px;
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .value {
+        color: var(--foreground);
+      }
+
+      .highlight {
+        display: inline-block;
+        padding: 8px 10px;
+        background: #ecfdf5;
+        border: 1px solid #86efac;
+        color: #065f46;
+        border-radius: 8px;
+        font-weight: 700;
+      }
+
+      .note {
+        background: var(--muted);
+        padding: 16px;
+        border-radius: 10px;
+        margin-top: 18px;
+        color: #64748b;
+        font-size: 0.95rem;
+      }
+
       .footer {
         background: var(--muted);
         text-align: center;
         padding: 16px;
         font-size: 0.85rem;
-        color: var(--foreground);
+        color: #64748b;
       }
 
-      .highlight {
-        color: var(--primary);
-        font-weight: 600;
+      @media (max-width: 520px) {
+        .label { display: block; width: 100%; font-size: 0.95rem; }
+        td { display: block; padding: 8px 0; }
       }
     </style>
   </head>
 
   <body>
-    <div class="email-wrapper">
+    <div class="email-wrapper" role="article" aria-roledescription="email">
       <div class="header">
         <h1>🏋️‍♀️ New Member Registered</h1>
       </div>
 
       <div class="content">
-        <p>Hello Admin,</p>
-        <p>A new member has joined <strong>Gym Fitness</strong>.</p>
+        <p class="intro">Hello Admin,</p>
+        <p class="intro">A new member has been successfully registered in <strong>Gym Fitness</strong>.</p>
+
+        <div>
+          <span class="member-id">Member ID: ${data.memberCode}</span>
+        </div>
 
         <div class="section-title">👤 Member Details</div>
-        <table>
-          <tr><td><strong>Name:</strong></td><td>${fullName}</td></tr>
-          <tr><td><strong>Phone:</strong></td><td>${phone}</td></tr>
-          <tr><td><strong>Gender:</strong></td><td>${gender}</td></tr>
-          <tr><td><strong>Start Date:</strong></td><td>${startDate.toDateString()}</td></tr>
-          <tr><td><strong>End Date:</strong></td><td>${endDate.toDateString()}</td></tr>
-          <tr><td><strong>Duration:</strong></td><td>${durationMonths} month(s)</td></tr>
+        <table role="table" aria-label="Member details">
+          <tr>
+            <td class="label">Name</td>
+            <td class="value">${data.fullName}</td>
+          </tr>
+          <tr>
+            <td class="label">Phone</td>
+            <td class="value">${data.phone}</td>
+          </tr>
+          <tr>
+            <td class="label">Gender</td>
+            <td class="value">${data.gender === "male" ? "Male" : "Female"}</td>
+          </tr>
+          <tr>
+            <td class="label">Start Date</td>
+            <td class="value">${formatDate(data.startDate)}</td>
+          </tr>
+          <tr>
+            <td class="label">End Date</td>
+            <td class="value">${formatDate(data.endDate)}</td>
+          </tr>
+          <tr>
+            <td class="label">Duration</td>
+            <td class="value">${data.durationMonths} month${
+    data.durationMonths > 1 ? "s" : ""
+  }</td>
+          </tr>
         </table>
 
         <div class="section-title">💳 Payment Info</div>
-        <table>
-          <tr><td><strong>Amount:</strong></td><td class="highlight">${amount} ETB</td></tr>
-          <tr><td><strong>Method:</strong></td><td>${method}</td></tr>
-          <tr><td><strong>Date:</strong></td><td>${new Date().toDateString()}</td></tr>
+        <table role="table" aria-label="Payment details">
+          <tr>
+            <td class="label">Amount</td>
+            <td class="value"><span class="highlight">${amountDisplay}</span></td>
+          </tr>
+          <tr>
+            <td class="label">Method</td>
+            <td class="value">${methodDisplay}</td>
+          </tr>
+          <tr>
+            <td class="label">Recorded</td>
+            <td class="value">${formatDate(new Date())}</td>
+          </tr>
         </table>
 
-        <p style="margin-top:1.5rem;">Keep up the great work! 🎯</p>
+        <div class="note">
+          Membership Card (PDF) is attached. Please print and hand it to the member at reception.
+        </div>
+
+        <p style="margin-top: 18px;">Keep building the strongest gym in town — good luck! 💪</p>
       </div>
 
       <div class="footer">
-        <p>Gym Fitness Admin System © ${new Date().getFullYear()}</p>
+        Gym Fitness Admin System • © ${new Date().getFullYear()}
       </div>
     </div>
   </body>

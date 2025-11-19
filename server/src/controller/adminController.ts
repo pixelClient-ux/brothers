@@ -43,7 +43,7 @@ export const updateProfile = catchAsync(async (req, res, next) => {
     return res.status(200).json({
       status: "success",
       message:
-        "A confirmation email has been sent to your new address. Please verify to complete the change.",
+        "A confirmation email has been sent to your Email. Please verify to complete the change.",
     });
   }
 

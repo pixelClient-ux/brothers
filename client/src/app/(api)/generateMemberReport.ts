@@ -9,10 +9,6 @@ interface GetMemberProps {
   };
 }
 
-/**
- * Generate and download a filtered Member Report (PDF)
- * Works like `getMembers` but fetches binary (PDF) data.
- */
 export const generateReport = async ({ searchParams }: GetMemberProps) => {
   const query = new URLSearchParams();
 
@@ -20,11 +16,12 @@ export const generateReport = async ({ searchParams }: GetMemberProps) => {
   if (searchParams.range) query.append("range", searchParams.range);
   if (searchParams.search) query.append("search", searchParams.search);
 
-  const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/memebr-report?${query.toString()}`;
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/member-report?${query.toString()}`;
 
   try {
     const response = await fetch(url, {
       method: "GET",
+      credentials: "include",
       headers: {
         "Content-Type": "application/pdf",
       },
@@ -35,18 +32,15 @@ export const generateReport = async ({ searchParams }: GetMemberProps) => {
       throw new Error(errorText || "Failed to generate report");
     }
 
-    // Convert response to Blob (PDF)
     const blob = await response.blob();
     const pdfUrl = window.URL.createObjectURL(blob);
 
-    // Create a download link
     const link = document.createElement("a");
     link.href = pdfUrl;
     link.download = "gym_member_report.pdf";
     document.body.appendChild(link);
     link.click();
 
-    // Clean up
     window.URL.revokeObjectURL(pdfUrl);
     document.body.removeChild(link);
   } catch (error) {
