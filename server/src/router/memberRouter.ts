@@ -4,9 +4,11 @@ import {
   deleteMember,
   getDashboardStats,
   getMemebr,
+  getMemebrDetails,
   getMemebrs,
   renewMembership,
   updateMember,
+  verifyMemberByCode,
 } from "../controller/memberController.js";
 import {
   resizeMemberAvatar,
@@ -18,6 +20,8 @@ const router = express.Router();
 router.use(protect);
 router
   .get("/", getMemebrs)
+  .get("/getMemebrDetails/:memberCode", getMemebrDetails)
+  .get("/verify/:memberCode", verifyMemberByCode)
   .get("/stats", getDashboardStats)
   .post("/create", upload.single("avatar"), resizeMemberAvatar, createMember)
   .get("/:memberId", getMemebr)

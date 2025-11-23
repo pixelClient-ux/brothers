@@ -81,7 +81,7 @@ export default function MemberList({ data, total }: MemberListProps) {
     setRenewMember({
       id: member._id,
       fullName: member.fullName,
-      avatar: member.avatar,
+      avatar: member.avatar.url,
       phone: member.phone,
       status: member.membership?.status === "active" ? "Active" : "Expired",
       membershipPeriod: member.membership?.durationMonths?.toString() || "0",
@@ -146,7 +146,7 @@ export default function MemberList({ data, total }: MemberListProps) {
                     <Image
                       height={32}
                       width={32}
-                      src={member.avatar || "/gym/profile.png"}
+                      src={member.avatar.url || "/gym/profile.png"}
                       alt={member.fullName}
                       className="h-8 w-8 rounded-full border-2 border-gray-600 object-cover"
                     />

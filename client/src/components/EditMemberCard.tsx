@@ -71,7 +71,7 @@ export default function EditMemberCard({
       setPreview(url);
       return () => URL.revokeObjectURL(url);
     } else if (selectedMember) {
-      setPreview(selectedMember.avatar);
+      setPreview(selectedMember.avatar.url);
     }
   }, [avatarFile, selectedMember]);
 
@@ -88,7 +88,7 @@ export default function EditMemberCard({
         amount: lastPayment?.amount || 0,
         method: lastPayment?.method || "cash",
       });
-      setPreview(selectedMember.avatar);
+      setPreview(selectedMember.avatar.url);
     }
   }, [selectedMember, reset]);
 

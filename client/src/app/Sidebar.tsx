@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Settings,
   LogOut,
+  QrCode,
 } from "lucide-react";
 import {
   Sidebar,
@@ -32,6 +33,7 @@ export default function GymSidebar() {
   const navItems = [
     { title: "Dashboard", icon: LayoutDashboard, href: "/" },
     { title: "Members", icon: Users, href: "/members" },
+    { title: "Scan", href: "/scan", icon: QrCode },
     { title: "Settings", icon: Settings, href: "/settings" },
   ];
 

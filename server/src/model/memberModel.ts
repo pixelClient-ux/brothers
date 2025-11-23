@@ -1,131 +1,63 @@
-import mongoose, { Schema, model, Document, Model } from "mongoose";
-import type { HydratedDocument, Query } from "mongoose";
+import mongoose, { Schema, model, Document, Model, Query } from "mongoose";
 import { nanoid } from "nanoid";
-/* -------------------------------------------------
-   Ethiopian Calendar helpers
-   ------------------------------------------------- */
 
-/** Ethiopian date representation */
+// Ethiopian Date Type
 interface EthDate {
   year: number;
-  month: number; // 1-13
-  day: number; // 1-30 (Pagumē has 5 or 6 days)
+  month: number;
+  day: number;
 }
 
-/**
- * Convert a JavaScript Date (Gregorian) → Ethiopian date.
- * Uses the simple 7-year-8-month offset (good enough for membership dates).
- */
-function toEthDate(greg: Date): EthDate {
-  const jd = gregToJd(greg);
-  return jdToEth(jd);
+export interface AvatarType {
+  url: string;
+  publicId?: string | null;
 }
 
-/**
- * Convert Ethiopian date → JavaScript Date (Gregorian, 00:00 UTC).
- */
-function fromEthDate(eth: EthDate): Date {
-  const jd = ethToJd(eth);
-  return jdToGreg(jd);
-}
+// Convert Gregorian → Ethiopian
+function toEth(d: Date): EthDate {
+  const jd = Math.floor(d.getTime() / 86400000) + 2440588;
+  const ethEpoch = 1723856;
+  const r = jd - ethEpoch;
 
-/* ---- Julian Day Number helpers (simplified, accurate for 1900-2100) ---- */
-function gregToJd(d: Date): number {
-  const y = d.getUTCFullYear(),
-    m = d.getUTCMonth() + 1,
-    day = d.getUTCDate();
-  let a = Math.floor((14 - m) / 12);
-  let y2 = y + 4800 - a;
-  let m2 = m + 12 * a - 3;
-  return (
-    day +
-    Math.floor((153 * m2 + 2) / 5) +
-    365 * y2 +
-    Math.floor(y2 / 4) -
-    Math.floor(y2 / 100) +
-    Math.floor(y2 / 400) -
-    32045
-  );
-}
-function jdToGreg(jd: number): Date {
-  let a = jd + 32044;
-  let b = Math.floor((4 * a + 3) / 146097);
-  let c = a - Math.floor((b * 146097) / 4);
-  let d = Math.floor((4 * c + 3) / 1461);
-  let e = c - Math.floor((1461 * d) / 4);
-  let m = Math.floor((5 * e + 2) / 153);
-  const day = e - Math.floor((153 * m + 2) / 5) + 1;
-  const month = m + 3 - 12 * Math.floor(m / 10);
-  const year = b * 100 + d - 4800 + Math.floor(m / 10);
-  return new Date(Date.UTC(year, month - 1, day));
-}
-function jdToEth(jd: number): EthDate {
-  const ethEpoch = 1723856; // JD of 1/1/0001 EC
-  const jdn = jd - ethEpoch;
-  const year = Math.floor(jdn / 365.25) + 1;
-  const doy = jdn - Math.floor((year - 1) * 365.25);
+  const year = Math.floor(r / 365.25) + 1;
+  const doy = r - Math.floor((year - 1) * 365.25);
   const month = Math.floor(doy / 30) + 1;
-  const day = doy - (month - 1) * 30;
+  const day = doy - (month - 1) * 30 + 1;
+
   return { year, month, day };
 }
-function ethToJd(eth: EthDate): number {
+
+// Add months in Ethiopian calendar
+function addEthMonths(d: EthDate, m: number): EthDate {
+  const t = d.year * 13 + d.month - 1 + m;
+  const y = Math.floor(t / 13);
+  const mo = (t % 13) + 1;
+  const isLeap = y % 4 === 3;
+  const max = mo === 13 ? (isLeap ? 6 : 5) : 30;
+  return { year: y, month: mo, day: Math.min(d.day, max) };
+}
+
+// Convert Ethiopian → Gregorian
+function ethToGreg(eth: EthDate): Date {
   const ethEpoch = 1723856;
-  return (
+  const jd =
     ethEpoch +
     (eth.year - 1) * 365 +
     Math.floor((eth.year - 1) / 4) +
     (eth.month - 1) * 30 +
-    eth.day
-  );
+    eth.day -
+    1; // adjustment for accuracy
+  const time = (jd - 2440588) * 86400000;
+  return new Date(time);
 }
 
-/* ---- Ethiopian month addition (keeps end-of-month) ---- */
-function addEthMonths(eth: EthDate, months: number): EthDate {
-  const origDay = eth.day;
-  const targetMonth = eth.month + months;
-  const newYear = eth.year + Math.floor((targetMonth - 1) / 13);
-  const newMonth = ((targetMonth - 1) % 13) + 1;
-
-  // Pagumē (month 13) has 5 days (6 in leap years)
-  const isLeap =
-    (newYear % 4 === 3 && newYear % 100 !== 3) || newYear % 400 === 3;
-  const daysInTarget = newMonth === 13 ? (isLeap ? 6 : 5) : 30;
-
-  const day = Math.min(origDay, daysInTarget);
-  return { year: newYear, month: newMonth, day };
-}
-
-/* ---- Ethiopian days / months between two dates ---- */
-function ethDaysBetween(start: EthDate, end: EthDate): number {
-  const jdStart = ethToJd(start);
-  const jdEnd = ethToJd(end);
-  return jdEnd - jdStart + 1; // inclusive
-}
-function ethMonthsBetweenCountingPartialAsOne(
-  start: EthDate,
-  end: EthDate
-): number {
-  if (
-    end.year < start.year ||
-    (end.year === start.year && end.month < start.month)
-  )
-    return 0;
-
-  let total = (end.year - start.year) * 13 + (end.month - start.month);
-  if (end.day >= start.day) total += 1;
-  return Math.max(1, total);
-}
-
-/* -------------------------------------------------
-   Mongoose schema
-   ------------------------------------------------- */
-
+// Interfaces
 export interface IMember {
   fullName: string;
   phone: string;
   gender: "male" | "female";
   role: "member";
-  avatar: string;
+  avatar: AvatarType;
   isActive: boolean;
   payments: {
     amount?: number;
@@ -140,35 +72,35 @@ export interface IMember {
   };
   memberCode: string;
   isDeleted: boolean;
-  deletedAt: Date;
+  deletedAt: Date | null;
 }
 
 export interface IMemberDocument extends IMember, Document {
-  daysLeft: number; // Ethiopian days left
+  daysLeft: number;
   renewMembership(
     months?: number,
     amount?: number,
-    method?: "cash" | "cbe" | "tele-birr" | "transfer"
+    method?: string
   ): Promise<IMemberDocument>;
 }
 
 export type MemberModel = Model<IMemberDocument>;
 
+// Schema
 const memberSchema = new Schema<IMemberDocument, MemberModel>(
   {
     fullName: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true, unique: true },
     gender: { type: String, enum: ["male", "female"], required: true },
     role: { type: String, enum: ["member"], default: "member" },
-    avatar: { type: String, default: "/images/profile.png" },
+    avatar: {
+      url: { type: String, default: "/images/profile.png" },
+      publicId: { type: String, default: null },
+    },
     isActive: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
-    memberCode: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
-    deletedAt: Date,
+    deletedAt: { type: Date, default: null },
+    memberCode: { type: String, unique: true, sparse: true },
     payments: [
       {
         amount: Number,
@@ -183,7 +115,7 @@ const memberSchema = new Schema<IMemberDocument, MemberModel>(
     membership: {
       startDate: Date,
       endDate: Date,
-      durationMonths: { type: Number, default: 0 },
+      durationMonths: Number,
       status: { type: String, default: "active" },
     },
   },
@@ -194,124 +126,87 @@ const memberSchema = new Schema<IMemberDocument, MemberModel>(
   }
 );
 
-/* -------------------------------------------------
-   Middleware – soft delete
-   ------------------------------------------------- */
+// Soft delete filter
 memberSchema.pre(/^find/, function (this: Query<any, any>, next) {
   this.where({ isDeleted: { $ne: true } });
   next();
 });
 
+// Auto generate member code
 memberSchema.pre("save", function (next) {
-  if (!this.memberCode && this.isNew) {
+  if (this.isNew && !this.memberCode) {
     this.memberCode = `MEM-${nanoid(8).toUpperCase()}`;
   }
   next();
 });
 
-/* -------------------------------------------------
-   Virtual – Ethiopian days left
-   ------------------------------------------------- */
-memberSchema.virtual("daysLeft").get(function (this: IMemberDocument) {
+// Virtual: Days left in Ethiopian calendar
+memberSchema.virtual("daysLeft").get(function () {
   if (!this.membership?.endDate) return 0;
 
-  const nowGreg = new Date();
-  const endGreg = new Date(this.membership.endDate);
-  endGreg.setHours(23, 59, 59, 999);
+  const today = toEth(new Date());
+  const end = toEth(new Date(this.membership.endDate));
 
-  const nowEth = toEthDate(nowGreg);
-  const endEth = toEthDate(endGreg);
+  const todayNum = today.year * 400 + today.month * 30 + today.day;
+  const endNum = end.year * 400 + end.month * 30 + end.day;
 
-  const diff = ethDaysBetween(nowEth, endEth);
-  return diff > 0 ? diff : 0;
+  const daysLeft = endNum - todayNum;
+  return Math.max(0, daysLeft);
 });
 
-/* -------------------------------------------------
-   Pre-save – update status based on Ethiopian days
-   ------------------------------------------------- */
+// Auto update status based on Ethiopian calendar
 memberSchema.pre("save", function (next) {
-  const m = this.membership;
-  if (m?.endDate) {
-    const days = (this as IMemberDocument).daysLeft;
-    if (days <= 0) {
-      m.status = "expired";
-    } else if (days <= 5) {
-      m.status = `${days} day${days === 1 ? "" : "s"} left`;
-    } else {
-      m.status = "active";
-    }
+  if (this.membership) {
+    this.membership.status = this.daysLeft > 0 ? "active" : "expired";
   }
   next();
 });
 
-/* -------------------------------------------------
-   Instance method – renew membership (Ethiopian months)
-   ------------------------------------------------- */
+// Renew membership (Ethiopian calendar logic)
 memberSchema.methods.renewMembership = async function (
   months = 1,
   amount?: number,
   method: "cash" | "cbe" | "tele-birr" | "transfer" = "cash"
-): Promise<IMemberDocument> {
-  const doc = this as IMemberDocument;
-  const nowGreg = new Date();
+) {
+  const nowEth = toEth(new Date());
 
-  /* ----- Determine base Ethiopian date ----- */
-  let baseEth: EthDate;
-  let startEth: EthDate;
-
-  if (doc.membership?.endDate) {
-    const existingEndGreg = new Date(doc.membership.endDate);
-    const currentlyActive = existingEndGreg.getTime() > nowGreg.getTime();
-
-    if (currentlyActive) {
-      baseEth = toEthDate(existingEndGreg);
-      startEth = doc.membership.startDate
-        ? toEthDate(new Date(doc.membership.startDate))
-        : toEthDate(nowGreg);
-    } else {
-      baseEth = toEthDate(nowGreg);
-      startEth = toEthDate(nowGreg);
+  // Base date: current end date if exists and not expired, otherwise today
+  let baseEth = nowEth;
+  if (this.membership?.endDate) {
+    const currentEndEth = toEth(new Date(this.membership.endDate));
+    const todayNum = nowEth.year * 400 + nowEth.month * 30 + nowEth.day;
+    const endNum =
+      currentEndEth.year * 400 + currentEndEth.month * 30 + currentEndEth.day;
+    if (endNum >= todayNum) {
+      baseEth = currentEndEth;
     }
-  } else {
-    baseEth = toEthDate(nowGreg);
-    startEth = toEthDate(nowGreg);
   }
 
-  /* ----- Add Ethiopian months (preserve end-of-month) ----- */
   const newEndEth = addEthMonths(baseEth, months);
-  const newEndGreg = fromEthDate(newEndEth);
-  const newStartGreg = fromEthDate(startEth);
+  const newEndGreg = ethToGreg(newEndEth);
 
-  /* ----- Compute duration (Ethiopian months) ----- */
-  const durationMonths = ethMonthsBetweenCountingPartialAsOne(
-    startEth,
-    newEndEth
-  );
-
-  /* ----- Update membership object ----- */
-  doc.membership = {
-    startDate: newStartGreg,
+  this.membership = {
+    startDate: this.membership?.startDate || new Date(),
     endDate: newEndGreg,
-    durationMonths,
+    durationMonths: (this.membership?.durationMonths || 0) + months,
     status: "active",
   };
 
-  /* ----- Record payment if amount supplied ----- */
-  if (typeof amount === "number") {
-    doc.payments = doc.payments || [];
-    doc.payments.push({ amount, date: nowGreg, method });
+  if (amount != null) {
+    this.payments.push({
+      amount,
+      date: new Date(),
+      method,
+    });
   }
 
-  await doc.save();
-  return doc;
+  await this.save();
+  return this;
 };
 
-/* -------------------------------------------------
-   Model export
-   ------------------------------------------------- */
+// Export Model
 const Member: MemberModel =
   mongoose.models.Member ||
   model<IMemberDocument, MemberModel>("Member", memberSchema);
 
 export default Member;
-export type HydratedMember = HydratedDocument<IMemberDocument>;

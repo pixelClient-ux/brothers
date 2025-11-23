@@ -8,6 +8,7 @@ import sendEmail from "../utils/sendEmail.js";
 import dotenv from "dotenv";
 import { renewMemberTemplate } from "../utils/renewMemberTemplate.js";
 import { generateMembershipCard } from "../utils/generateMembershipCard.js";
+import cloudinary from "../config/cloudinary.js";
 dotenv.config();
 
 export const createMember = catchAsync(async (req, res, next) => {
@@ -15,7 +16,6 @@ export const createMember = catchAsync(async (req, res, next) => {
     fullName,
     phone,
     gender,
-    avatar,
     durationMonths = 12,
     amount,
     method = "cash",
@@ -30,6 +30,9 @@ export const createMember = catchAsync(async (req, res, next) => {
     return next(new AppError("Member with this phone already exists", 409));
   }
 
+  const avatar = req.body.avatar
+    ? { url: req.body.avatar.url, publicId: req.body.avatar.publicId }
+    : { url: "/images/profile.png", publicId: null };
   const member = await Member.create({
     fullName: fullName.trim(),
     phone: phone.trim(),
@@ -45,7 +48,7 @@ export const createMember = catchAsync(async (req, res, next) => {
   const pdfBuffer = await generateMembershipCard(member);
 
   const adminEmail = process.env.EMAIL_USERNAME;
-  console.log("Admin Email:", adminEmail);
+
   if (adminEmail) {
     await sendEmail({
       email: adminEmail,
@@ -203,6 +206,40 @@ export const getMemebr = catchAsync(async (req, res, next) => {
     data: member,
   });
 });
+
+export const getMemebrDetails = catchAsync(async (req, res, next) => {
+  console.log("Fetching member details for code:", req.params.memberCode);
+  const { memberCode } = req.params;
+  const member = await Member.findOne({ memberCode });
+  if (!member) {
+    return next(new AppError("Member not found", 404));
+  }
+  res.status(200).json({
+    status: "success",
+    data: { member },
+  });
+});
+
+// controller
+export const verifyMemberByCode = catchAsync(async (req, res, next) => {
+  console.log("Verifying member with code:", req.params.memberCode);
+  const { memberCode } = req.params;
+  const member = await Member.findOne({ memberCode }).select(
+    "+membership.status"
+  );
+
+  if (!member || member.membership?.status === "expired") {
+    return res.status(200).json({
+      status: "success",
+      data: { member: null },
+    });
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: { member },
+  });
+});
 export const updateMember = catchAsync(async (req, res, next) => {
   const { memberId } = req.params;
 
@@ -216,6 +253,7 @@ export const updateMember = catchAsync(async (req, res, next) => {
     "method",
   ];
 
+  /** Filter allowed fields */
   const filteredData: Record<string, any> = {};
   for (const key of Object.keys(req.body)) {
     if (allowedFields.includes(key)) {
@@ -227,42 +265,51 @@ export const updateMember = catchAsync(async (req, res, next) => {
     return next(new AppError("No valid fields provided for update", 400));
   }
 
+  /** Find Member */
   const member = await Member.findById(memberId);
-  if (!member) {
-    return next(new AppError("Member not found", 404));
+  if (!member) return next(new AppError("Member not found", 404));
+
+  /** 🔥 1. Handle avatar update (Cloudinary) */
+  if (filteredData.avatar) {
+    // Delete old avatar only if it exists
+    if (member.avatar?.publicId) {
+      await cloudinary.uploader.destroy(member.avatar.publicId);
+    }
+
+    member.avatar = {
+      url: filteredData.avatar.url,
+      publicId: filteredData.avatar.publicId,
+    };
   }
 
+  /** 🔥 2. Update basic fields */
   if (filteredData.fullName) member.fullName = filteredData.fullName;
   if (filteredData.phone) member.phone = filteredData.phone;
   if (filteredData.gender) member.gender = filteredData.gender;
-  if (filteredData.avatar) member.avatar = filteredData.avatar;
 
-  if (member.membership) {
-    if (filteredData.durationMonths) {
-      const months = parseInt(filteredData.durationMonths);
+  /** 🔥 3. Update membership info */
+  if (filteredData.durationMonths && member.membership) {
+    const months = parseInt(filteredData.durationMonths);
+    member.membership.durationMonths = months;
 
-      member.membership.durationMonths = months;
+    if (member.membership.startDate) {
+      const start = new Date(member.membership.startDate);
+      const newEnd = new Date(start);
+      newEnd.setMonth(start.getMonth() + months);
+      member.membership.endDate = newEnd;
 
-      if (member.membership.startDate) {
-        const start = new Date(member.membership.startDate);
-        const newEnd = new Date(start);
-        newEnd.setMonth(start.getMonth() + months);
-        member.membership.endDate = newEnd;
-
-        const today = new Date();
-        if (newEnd > today) {
-          member.membership.status = "active";
-          member.isActive = true; // ✅ mark member as active
-        } else {
-          console.log(newEnd);
-          member.membership.status = "expired";
-          member.isActive = false; // optional: mark inactive if expired
-        }
+      const today = new Date();
+      if (newEnd > today) {
+        member.membership.status = "active";
+        member.isActive = true;
+      } else {
+        member.membership.status = "expired";
+        member.isActive = false;
       }
     }
   }
 
-  // update latest payment details (only edit, not new payment)
+  /** 🔥 4. Update last payment info */
   if (filteredData.amount || filteredData.method) {
     const lastPayment = member.payments[member.payments.length - 1];
     if (lastPayment) {
@@ -272,6 +319,7 @@ export const updateMember = catchAsync(async (req, res, next) => {
     }
   }
 
+  /** Save updates */
   await member.save();
 
   res.status(200).json({
@@ -345,6 +393,13 @@ export const deleteMember = catchAsync(async (req, res, next) => {
 
   if (!member) {
     return next(new AppError("No member found with that ID", 404));
+  }
+  if (member.avatar?.publicId) {
+    try {
+      await cloudinary.uploader.destroy(member.avatar.publicId);
+    } catch (err) {
+      console.warn("Failed to delete Cloudinary image on member delete:", err);
+    }
   }
 
   // Mark as deleted (soft delete)

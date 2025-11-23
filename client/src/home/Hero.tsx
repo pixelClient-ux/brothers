@@ -434,8 +434,8 @@ export default function Hero() {
                         rules={{ required: "Select duration" }}
                         render={({ field }) => (
                           <Select
-                            onValueChange={(v) => field.onChange(Number(v))}
-                            value={field.value}
+                            value={field.value} // keep string
+                            onValueChange={field.onChange} // keep string
                           >
                             <SelectTrigger className="rounded-none">
                               <SelectValue placeholder="Select" />
@@ -453,6 +453,7 @@ export default function Hero() {
                           </Select>
                         )}
                       />
+
                       {errors.durationMonths && (
                         <p className="mt-1 text-sm text-red-400">
                           {errors.durationMonths.message}

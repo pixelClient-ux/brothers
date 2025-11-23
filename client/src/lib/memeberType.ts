@@ -4,9 +4,12 @@ export interface MemberType {
   phone: string;
   gender: "male" | "female";
   role: "member";
-  avatar: string;
+  avatar: {
+    url: string;
+    publicId?: string;
+  };
   isActive: boolean;
-
+  memberCode: string;
   payments: {
     amount: number;
     date: string; // ✅ use string instead of Date for API responses

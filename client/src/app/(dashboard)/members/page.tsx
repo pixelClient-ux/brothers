@@ -38,6 +38,8 @@ async function MemeberListContent({
     return <NoDataAvailable />;
   }
 
+  console.log("members", data);
+
   return <MemberList data={data} total={total} />;
 }
 

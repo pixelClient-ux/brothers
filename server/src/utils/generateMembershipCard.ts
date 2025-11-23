@@ -9,10 +9,9 @@ dotenv.config();
 pdfMake.vfs = (pdfFonts as any).pdfMake?.vfs || {};
 
 export const generateMembershipCard = async (member: any): Promise<Buffer> => {
-  const frontendUrl = process.env.NEXT_PUBLIC_API_URL;
-  const verifyUrl = `${frontendUrl}/scanner/${member.memberCode}`;
+  const memberCode = member.memberCode;
 
-  const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
+  const qrDataUrl = await QRCode.toDataURL(memberCode, {
     width: 250,
     margin: 2,
   });
