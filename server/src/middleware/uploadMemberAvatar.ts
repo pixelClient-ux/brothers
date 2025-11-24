@@ -3,7 +3,6 @@ import type { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/AppError.js";
 import cloudinary from "../config/cloudinary.js";
 
-// multer memory storage — file available in req.file.buffer
 const storage = multer.memoryStorage();
 export const upload = multer({
   storage,
@@ -39,20 +38,17 @@ const uploadBufferToCloudinary = (buffer: Buffer, folder = "gym-members") => {
   });
 };
 
-// middleware to upload avatar (if provided) and set req.body.avatar = { url, publicId }
 export const resizeMemberAvatar = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    // If no file uploaded, just continue (controller will use default)
     if (!req.file) return next();
 
     const fileBuffer = (req.file as Express.Multer.File).buffer;
     const result = await uploadBufferToCloudinary(fileBuffer, "gym-members");
 
-    // put a consistent payload into req.body for controller to consume
     req.body.avatar = {
       url: result.secure_url,
       publicId: result.public_id,

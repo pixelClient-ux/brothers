@@ -4,19 +4,20 @@ import { Suspense } from "react";
 import MemberListSkeleton from "@/components/MemberListSkeleton";
 
 interface PageProps {
-  searchParams: {
+  searchParams: Promise<{
+    q?: string;
     status?: string;
     page?: string;
     range?: string;
-  };
+  }>;
 }
 
 export default async function page({ searchParams }: PageProps) {
-  const { page, status, range } = await searchParams;
+  const { q, page, status, range } = await searchParams;
   return (
     <div>
       <Suspense fallback={<MemberListSkeleton />} key={`${range}-${status}`}>
-        <MemeberListContent page={page} status={status} range={range} />
+        <MemeberListContent q={q} page={page} status={status} range={range} />
       </Suspense>
     </div>
   );
@@ -26,19 +27,20 @@ async function MemeberListContent({
   page,
   status,
   range,
+  q,
 }: {
   page?: string;
   range?: string;
   status?: string;
+  q?: string;
 }) {
+  console.log("Fetching members with params:", { range, status, page, q });
   const { data, total } = await getMembers({
-    searchParams: { range, status, page },
+    searchParams: { range, status, page, q },
   });
   if (!data || data.length === 0) {
     return <NoDataAvailable />;
   }
-
-  console.log("members", data);
 
   return <MemberList data={data} total={total} />;
 }

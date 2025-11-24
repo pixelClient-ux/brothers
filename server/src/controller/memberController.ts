@@ -171,25 +171,32 @@ export const getDashboardStats = catchAsync(async (req, res, next) => {
     },
   });
 });
-export const getMemebrs = catchAsync(async (req, res, next) => {
+export const getMembers = catchAsync(async (req, res, next) => {
+  console.log("Fetching members with query:", req.query);
+  // Base query
   let query = Member.find();
-  let apiFeature = new ApiFeature(query, req.query)
+
+  // Apply filters, search, range, pagination
+  const apiFeature = new ApiFeature(query, req.query as any)
     .filter()
     .search()
     .range()
     .pagination();
 
   const members = await apiFeature.query;
-  const filteredCountQuery = Member.find();
-  new ApiFeature(filteredCountQuery, req.query).filter().range();
-  const totalDocs = await filteredCountQuery.countDocuments();
+
+  // Count total documents after filter + range (but before pagination)
+  const countQuery = Member.find();
+  new ApiFeature(countQuery, req.query as any).filter().search().range();
+
+  const totalDocs = await countQuery.countDocuments();
 
   const limit = 10;
-  const totalPage = Math.ceil(totalDocs / limit);
+  const totalPages = Math.ceil(totalDocs / limit);
 
   res.status(200).json({
     status: "success",
-    total: totalPage,
+    total: totalPages,
     data: members,
   });
 });

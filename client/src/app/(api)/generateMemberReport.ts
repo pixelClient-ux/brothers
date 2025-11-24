@@ -2,10 +2,11 @@ import toast from "react-hot-toast";
 
 interface GetMemberProps {
   searchParams: {
+    q?: string;
     status?: string;
     page?: string;
     range?: string;
-    search?: string;
+    search?: string; // backward compatibility
   };
 }
 

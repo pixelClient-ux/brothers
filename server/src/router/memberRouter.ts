@@ -3,9 +3,9 @@ import {
   createMember,
   deleteMember,
   getDashboardStats,
+  getMembers,
   getMemebr,
   getMemebrDetails,
-  getMemebrs,
   renewMembership,
   updateMember,
   verifyMemberByCode,
@@ -14,12 +14,12 @@ import {
   resizeMemberAvatar,
   upload,
 } from "../middleware/uploadMemberAvatar.js";
-import { protect } from "../controller/authController.js";
+import { protect, VerifyAdmin } from "../controller/authController.js";
 
 const router = express.Router();
-router.use(protect);
+router.use(protect, VerifyAdmin("admin"));
 router
-  .get("/", getMemebrs)
+  .get("/", getMembers)
   .get("/getMemebrDetails/:memberCode", getMemebrDetails)
   .get("/verify/:memberCode", verifyMemberByCode)
   .get("/stats", getDashboardStats)

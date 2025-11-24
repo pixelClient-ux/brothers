@@ -15,13 +15,12 @@ export const generateReport = catchAsync(async (req, res, next) => {
     .set("Content-Disposition", "attachment; filename=gym_member_report.pdf");
   doc.pipe(res);
 
-  // === COLOR SCHEME (from your Tailwind theme) ===
   const colors = {
-    primary: "#E67817", // Tailwind --primary (oklch(70.755% 0.19742 46.444))
-    accent: "#F9FAFB", // --accent
-    dark: "#1E1E1E", // --foreground dark mode
-    muted: "#6B7280", // --muted-foreground
-    border: "#E5E7EB", // --border
+    primary: "#E67817",
+    accent: "#F9FAFB",
+    dark: "#1E1E1E",
+    muted: "#6B7280",
+    border: "#E5E7EB",
     light: "#FFFFFF",
     destructive: "#DC2626",
     success: "#198754",

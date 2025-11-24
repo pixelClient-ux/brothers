@@ -146,7 +146,7 @@ export default function MemberList({ data, total }: MemberListProps) {
                     <Image
                       height={32}
                       width={32}
-                      src={member.avatar.url || "/gym/profile.png"}
+                      src={member.avatar.url || "/images/profile.png"}
                       alt={member.fullName}
                       className="h-8 w-8 rounded-full border-2 border-gray-600 object-cover"
                     />

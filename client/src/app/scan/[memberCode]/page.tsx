@@ -12,7 +12,7 @@ import getMemebrDetails from "@/app/(api)/getMemberDetails";
 import { Button } from "@/components/ui/button";
 
 interface PageProps {
-  params: { memberCode: string };
+  params: Promise<{ memberCode: string }>;
 }
 
 export default async function MemberStatusCard({ params }: PageProps) {

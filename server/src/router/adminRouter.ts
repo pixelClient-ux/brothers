@@ -11,6 +11,7 @@ import {
   protect,
   resetPassword,
   signUp,
+  VerifyAdmin,
 } from "../controller/authController.js";
 import {
   resizeMemberAvatar,
@@ -23,16 +24,17 @@ router.post("/signup", signUp);
 router
   .post("/login", login)
   .post("/forget-password", forgetPassword)
-  .post("/reset-password/:token", resetPassword)
-  .post("/update-password", protect, updatePassword)
-
-  .post("/logout", protect, logout)
-  .post("/confirm-email/:token", protect, confirmEmailChange)
+  .post("/reset-password/:token", resetPassword);
+router.use(protect, VerifyAdmin("admin"));
+router
+  .post("/update-password", updatePassword)
+  .post("/logout", logout)
+  .post("/confirm-email/:token", confirmEmailChange)
   .patch(
     "/update-profile",
-    protect,
     upload.single("avatar"),
     resizeMemberAvatar,
     updateProfile
   );
+
 export default router;

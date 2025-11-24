@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 
 export default function QRScannerPage() {
   const { mutate: verify, isPending } = useVerifyMember();
-  const [scanned, setScanned] = useState(false);
+  const processingRef = useRef(false);
   const [scannerStatus, setScannerStatus] = useState<
     "initializing" | "ready" | "scanning" | "error"
   >("initializing");
@@ -66,13 +66,20 @@ export default function QRScannerPage() {
     };
 
     const onScanSuccess = (decodedText: string) => {
-      if (!decodedText || scanned) return;
-      setScanned(true);
+      if (!decodedText || processingRef.current) return;
 
-      scannerRef.current?.clear();
+      processingRef.current = true;
+
+      try {
+        scannerRef.current?.clear();
+      } catch {
+        // ignore clear errors
+      }
+
       setScannerStatus("scanning");
       verify(decodedText, {
         onSettled: () => {
+          processingRef.current = false;
           setTimeout(() => setScannerStatus("ready"), 2000);
         },
       });

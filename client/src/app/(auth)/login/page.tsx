@@ -33,7 +33,7 @@ export default function LoginPage() {
       <div className="mx-auto flex h-[90vh] max-w-7xl items-center gap-10 px-12 py-10">
         <div className="relative hidden aspect-16/12 w-full md:block">
           <Image
-            src="/gym/gym.png"
+            src="/images/gym.png"
             alt="Logo"
             fill
             style={{ objectFit: "cover" }}
