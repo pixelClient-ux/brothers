@@ -11,7 +11,7 @@ export default function useCreateMember() {
     },
     onError: (error) => {
       console.log(error);
-      toast.error(error.message);
+      toast.error(error.message || "Somethin went wrong ,please try again");
     },
   });
 

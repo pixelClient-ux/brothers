@@ -23,8 +23,8 @@ export const renewMembership = async ({ data, memberId }: RenewMemberProps) => {
     );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to renew membership: ${errorText}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to renew membership");
     }
 
     // Return the updated member data or success message

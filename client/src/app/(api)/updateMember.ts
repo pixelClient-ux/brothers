@@ -17,8 +17,8 @@ export const updateMember = async ({ data, memberId }: updatedMemberProps) => {
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText);
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to update member");
   }
 
   const updatedMember = await response.json();

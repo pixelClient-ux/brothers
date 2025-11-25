@@ -17,21 +17,28 @@ import {
 import { protect, VerifyAdmin } from "../controller/authController.js";
 
 const router = express.Router();
-router.use(protect, VerifyAdmin("admin"));
+router.use(protect);
 router
   .get("/", getMembers)
   .get("/getMemebrDetails/:memberCode", getMemebrDetails)
   .get("/verify/:memberCode", verifyMemberByCode)
   .get("/stats", getDashboardStats)
-  .post("/create", upload.single("avatar"), resizeMemberAvatar, createMember)
+  .post(
+    "/create",
+    VerifyAdmin("admin"),
+    upload.single("avatar"),
+    resizeMemberAvatar,
+    createMember
+  )
   .get("/:memberId", getMemebr)
-  .delete("/:memberId", deleteMember)
+  .delete("/:memberId", VerifyAdmin("admin"), deleteMember)
   .patch(
     "/updateMember/:memberId",
+    VerifyAdmin("admin"),
     upload.single("avatar"),
     resizeMemberAvatar,
     updateMember
   )
-  .patch("/renew/:memberId", renewMembership);
+  .patch("/renew/:memberId", VerifyAdmin("admin"), renewMembership);
 
 export default router;

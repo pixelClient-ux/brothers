@@ -16,7 +16,7 @@ export default function useRenewMember() {
     },
     onError: (error) => {
       console.log(error);
-      toast.error("Somethin went wrong ,please try again");
+      toast.error(error.message || "Somethin went wrong ,please try again");
     },
   });
 

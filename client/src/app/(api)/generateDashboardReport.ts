@@ -25,8 +25,8 @@ export const generateDashboardReport = async (params: DashboardParams) => {
     });
 
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(errorText || "Failed generating dashboard report");
+      const erroData = await res.json();
+      throw new Error(erroData.message || "Failed generating dashboard report");
     }
 
     const blob = await res.blob();

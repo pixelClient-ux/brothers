@@ -121,46 +121,113 @@ export default function Hero() {
   };
 
   if (isLoading) return <DashBoardSkeloton />;
+  // Defensive: if no data available, show a professional empty state
+  if (!stats || !stats.data) {
+    return (
+      <div className="w-full bg-slate-900">
+        <div className="mx-auto max-w-7xl px-5 py-12">
+          <div className="rounded-lg border border-gray-700 bg-gray-900 p-8 text-center">
+            <h2 className="text-2xl font-semibold text-white">
+              Dashboard Unavailable
+            </h2>
+            <p className="mt-4 text-gray-400">
+              We could not load dashboard statistics right now. Try refreshing
+              the page or check your network connection. If the problem
+              persists, add some members to the system to populate the
+              dashboard.
+            </p>
+            <div className="mt-6 flex justify-center gap-3">
+              <Button
+                className="bg-primary rounded-none"
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </Button>
+              <Button
+                className="rounded-none"
+                onClick={() => (window.location.href = "/(dashboard)/members")}
+              >
+                Add Members
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const statusData = [
-    { name: "Active", value: stats?.data.status.active },
-    { name: "Expired", value: stats!.data.status.expired },
-    { name: "Inactive", value: stats!.data.status.inactive },
+    { name: "Active", value: stats.data.status.active },
+    { name: "Expired", value: stats.data.status.expired },
+    { name: "Inactive", value: stats.data.status.inactive },
   ];
 
   const genderData = [
-    { name: "Male", value: stats!.data.gender.male },
-    { name: "Female", value: stats!.data.gender.female },
-    { name: "Other", value: stats!.data.gender.other },
+    { name: "Male", value: stats.data.gender.male },
+    { name: "Female", value: stats.data.gender.female },
+    { name: "Other", value: stats.data.gender.other },
   ];
+
+  // Compute percent changes where we have previous-period values (server provides them when `range` is numeric)
+  const calcPercent = (current: number, previous: number) => {
+    if (previous === 0) return current === 0 ? 0 : 100;
+    return ((current - previous) / Math.abs(previous)) * 100;
+  };
+
+  const newMembersChange =
+    stats.data.newMembersPrevious !== undefined
+      ? calcPercent(stats.data.newMembers, stats.data.newMembersPrevious)
+      : null;
+
+  const revenueChange =
+    stats.data.totalRevenuePrevious !== undefined
+      ? calcPercent(stats.data.totalRevenue, stats.data.totalRevenuePrevious)
+      : null;
 
   const statsCards = [
     {
       title: "Total Members",
-      value: stats!.data.totalMembers.toLocaleString(),
-      change: "+12.4%",
-      trend: "up",
+      value: stats.data.totalMembers.toLocaleString(),
+      // Show percentage of active members instead of a historical change where not available
+      change: `${Math.round((stats.data.activeMembers / Math.max(1, stats.data.totalMembers)) * 100)}% Active`,
+      trend: stats.data.activeMembers >= 0 ? "up" : "neutral",
       note: "All time",
     },
     {
       title: "Active Memberships",
-      value: stats!.data.activeMembers.toLocaleString(),
-      change: "+8.1%",
+      value: stats.data.activeMembers.toLocaleString(),
+      change: `${Math.round((stats.data.activeMembers / Math.max(1, stats.data.totalMembers)) * 100)}% of members`,
       trend: "up",
       note: "Currently active",
     },
     {
       title: "New Members",
-      value: stats!.data.newMembers,
-      change: "+15.2%",
-      trend: "up",
+      value: stats.data.newMembers,
+      change:
+        newMembersChange !== null
+          ? `${newMembersChange > 0 ? "+" : ""}${newMembersChange.toFixed(1)}%`
+          : "-",
+      trend:
+        newMembersChange !== null
+          ? newMembersChange >= 0
+            ? "up"
+            : "down"
+          : "neutral",
       note: `Last ${filter === "all" ? "year" : filter + " days"}`,
     },
     {
       title: "Total Revenue",
-      value: `$${stats!.data.totalRevenue.toLocaleString()}`,
-      change: "+25.3%",
-      trend: "up",
+      value: `$${stats.data.totalRevenue.toLocaleString()}`,
+      change:
+        revenueChange !== null
+          ? `${revenueChange > 0 ? "+" : ""}${revenueChange.toFixed(1)}%`
+          : "-",
+      trend:
+        revenueChange !== null
+          ? revenueChange >= 0
+            ? "up"
+            : "down"
+          : "neutral",
       note: `Last ${filter === "all" ? "year" : filter + " days"}`,
     },
   ];

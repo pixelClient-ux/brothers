@@ -13,6 +13,7 @@ export function useDashboardStats({ range }: UseDashboardStatsProps) {
     Error
   >({
     queryFn: () => getDashboardStats({ searchParams: { range } }),
+
     queryKey: ["dashboard", range], // refetch on range change
     retry: 1,
     staleTime: 1000 * 60 * 5,

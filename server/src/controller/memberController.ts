@@ -99,6 +99,39 @@ export const getDashboardStats = catchAsync(async (req, res, next) => {
   const newMembersFeature = new ApiFeature(Member.find(), req.query).range();
   const newMembers = await newMembersFeature.query.countDocuments();
 
+  // Compute previous period values for range-based comparisons (if a numeric range provided)
+  let previousNewMembers = 0;
+  let previousTotalRevenue = 0;
+  try {
+    const rangeParam = req.query.range as string | undefined;
+    const rangeDays = rangeParam && rangeParam !== "all" ? Number(rangeParam) : NaN;
+    if (!isNaN(rangeDays) && rangeDays > 0) {
+      const now = new Date();
+      const currentPeriodStart = new Date(now);
+      currentPeriodStart.setDate(now.getDate() - rangeDays);
+
+      const previousPeriodEnd = new Date(currentPeriodStart);
+      const previousPeriodStart = new Date(currentPeriodStart);
+      previousPeriodStart.setDate(currentPeriodStart.getDate() - rangeDays);
+
+      previousNewMembers = await Member.countDocuments({
+        createdAt: { $gte: previousPeriodStart, $lt: previousPeriodEnd },
+      });
+
+      // Previous total revenue: use the same heuristic as current revenue (sum last payment of members created in period)
+      const prevRevenueMembers = await Member.find({
+        createdAt: { $gte: previousPeriodStart, $lt: previousPeriodEnd },
+      });
+      previousTotalRevenue = prevRevenueMembers.reduce((sum: number, m: any) => {
+        const lastPayment = m.payments?.[m.payments.length - 1];
+        return sum + (lastPayment?.amount || 0);
+      }, 0);
+    }
+  } catch (err) {
+    // don't fail the whole request if previous-period calculation errors
+    console.warn("Failed to compute previous period stats:", err);
+  }
+
   // === 4. Total Revenue in Range ===
   const revenueFeature = new ApiFeature(Member.find(), req.query).range();
   const revenueMembers = await revenueFeature.query;
@@ -164,7 +197,9 @@ export const getDashboardStats = catchAsync(async (req, res, next) => {
       totalMembers,
       activeMembers,
       newMembers,
+      newMembersPrevious: previousNewMembers,
       totalRevenue,
+      totalRevenuePrevious: previousTotalRevenue,
       monthlyMembers,
       status,
       gender,

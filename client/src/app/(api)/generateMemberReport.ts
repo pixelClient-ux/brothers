@@ -29,8 +29,8 @@ export const generateReport = async ({ searchParams }: GetMemberProps) => {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || "Failed to generate report");
+      const errordata = await response.json();
+      throw new Error(errordata.message || "Failed to generate report");
     }
 
     const blob = await response.blob();

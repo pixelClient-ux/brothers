@@ -9,8 +9,8 @@ export const removeMember = async (memberId: string) => {
     );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to delete member: ${errorText}`);
+      const erroData = await response.json();
+      throw new Error(erroData.message || "Failed to remove member");
     }
 
     const result = await response.json();

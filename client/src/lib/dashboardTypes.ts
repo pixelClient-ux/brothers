@@ -20,7 +20,10 @@ export interface DashboardStats {
   totalMembers: number;
   activeMembers: number;
   newMembers: number;
+  // Optional previous-period values (added by server when a numeric `range` is provided)
+  newMembersPrevious?: number;
   totalRevenue: number;
+  totalRevenuePrevious?: number;
   monthlyMembers: MonthlyMember[];
   status: StatusBreakdown;
   gender: GenderBreakdown;

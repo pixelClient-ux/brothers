@@ -109,13 +109,20 @@ export const logout = catchAsync(async (req, res, next) => {
   });
 });
 
-export const VerifyAdmin = (...roles: string[]) => {
+export const VerifyAdmin = (...allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!roles.includes(req.admin.roles)) {
+    const admin = req.admin; // set by protect()
+
+    if (!admin) {
+      return next(new AppError("admin not authenticated", 401));
+    }
+
+    if (!allowedRoles.includes(admin.role)) {
       return next(
-        new AppError("you are not allowed to perfrom this action", 401)
+        new AppError("You are not allowed to perform this action", 403)
       );
     }
+
     next();
   };
 };

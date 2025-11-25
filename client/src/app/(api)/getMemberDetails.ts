@@ -22,8 +22,8 @@ export default async function getMemebrDetails(memberCode: string) {
   );
 
   if (!result.ok) {
-    const errorText = await result.text();
-    console.error("Error fetching member details:", errorText);
+    const erroData = await result.json();
+    console.error(erroData.message || "Failed to fetch member details");
     return null;
   }
   const data: memberDetailsResponse = await result.json();
