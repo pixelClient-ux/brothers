@@ -1,6 +1,7 @@
 import express from "express";
 import {
   confirmEmailChange,
+  getAdminProfile,
   updatePassword,
   updateProfile,
 } from "../controller/adminController.js";
@@ -26,6 +27,7 @@ router
   .post("/forget-password", forgetPassword)
   .post("/reset-password/:token", resetPassword);
 router.use(protect, VerifyAdmin("admin"));
+router.get("/", getAdminProfile);
 router
   .post("/update-password", updatePassword)
   .post("/logout", logout)

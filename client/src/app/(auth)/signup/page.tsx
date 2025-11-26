@@ -46,7 +46,7 @@ export default function SignUpPage() {
       <div className="w-full space-y-6 md:basis-4/5">
         <div className="w-full text-center">
           <h1 className="text-3xl font-bold lg:text-4xl">
-            Welcome to <br /> <span className="text-primary">GYM-FITNESS</span>
+            Welcome to <br /> <span className="text-primary">BROTHERS-GYM</span>
           </h1>
           <p className="text-muted-foreground text-sm">Create your account</p>
         </div>

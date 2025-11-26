@@ -1,13 +1,14 @@
 import mongoose, { Document, Model, Schema, model, Types } from "mongoose";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import type { AvatarType } from "./memberModel.js";
 
 export interface IAdmin {
   fullName: string;
   email: string;
   password: string;
   passwordConfirm?: string;
-  avatar?: string;
+  avatar?: AvatarType;
   role?: string;
   passwordChangedAt: Date;
   passwordResetToken?: string;
@@ -52,7 +53,10 @@ const adminSchema = new Schema<IAdminDocument>(
         message: "Passwords are not the same",
       },
     },
-    avatar: { type: String, default: "/images/admin.png" },
+    avatar: {
+      url: { type: String, default: "/images/profile.png" },
+      publicId: { type: String, default: null },
+    },
     role: { type: String, default: "admin" },
     passwordChangedAt: Date,
     passwordResetToken: String,

@@ -48,7 +48,7 @@ export default function GymSidebar() {
       <SidebarHeader className="border-b bg-gray-900">
         <Link href="/" className="flex items-center gap-2 px-3 py-4">
           <Dumbbell className="text-primary h-6 w-6" />
-          <h1 className="text-lg font-bold">Gym-Fitness</h1>
+          <h1 className="text-lg font-bold">Brothers Gym</h1>
         </Link>
       </SidebarHeader>
 

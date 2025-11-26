@@ -42,6 +42,7 @@ import useCreateMember from "@/hooks/useCreateMember";
 import { useDashboardStats } from "@/hooks/useGetdashboardStat";
 import DashBoardSkeloton from "@/app/(dashboard)/loading";
 import useGenerateDashboardReport from "@/hooks/useGeneratedadhboardReport";
+import useGetAdmin from "@/hooks/useGetAdminProfile";
 
 export type MemberPayload = {
   fullName: string;
@@ -61,6 +62,7 @@ export default function Hero() {
   const [filter, setFilter] = useState("30");
 
   const { data: stats, isLoading } = useDashboardStats({ range: filter });
+  const { data: AdminProfile } = useGetAdmin();
 
   type FormValues = {
     fullName: string;
@@ -243,9 +245,20 @@ export default function Hero() {
                   <h1 className="text-2xl font-bold text-white">
                     Welcome back,
                   </h1>
-                  <h2 className="text-primary text-2xl font-medium">
-                    GYM-FITNESS
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <Image
+                        src={AdminProfile?.avatar?.url || "/default-avatar.png"}
+                        alt="Admin Avatar"
+                        width={40}
+                        height={40}
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    </div>
+                    <h2 className="text-primary text-2xl font-medium">
+                      {AdminProfile?.fullName || "Admin"}
+                    </h2>
+                  </div>
                 </div>
                 <p className="text-muted-foreground">
                   This is the overview of you

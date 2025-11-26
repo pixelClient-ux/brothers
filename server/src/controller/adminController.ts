@@ -6,6 +6,19 @@ import { passwordChangedTemplate } from "../utils/passwordChangedTemplate .js";
 import { confirmEmailChangeTemplate } from "../utils/confirmEmailChangeTemplate.js";
 import crypto from "crypto";
 
+export const getAdminProfile = catchAsync(async (req, res, next) => {
+  const adminId = req.admin._id;
+  const admin = await Admin.findById(adminId).select("-password");
+  if (!admin) {
+    return next(new AppError("Admin not found", 404));
+  }
+  res.status(200).json({
+    status: "success",
+    data: {
+      admin,
+    },
+  });
+});
 export const updateProfile = catchAsync(async (req, res, next) => {
   const { email, fullName } = req.body;
   const adminId = req.admin._id;

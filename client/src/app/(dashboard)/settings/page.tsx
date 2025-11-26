@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUpdateAdminProfile } from "@/hooks/useUpdateAdminProfile";
 import { Loader2 } from "lucide-react";
 import { useUpdatePassword } from "@/hooks/useUpdatePassword";
+import useGetAdmin from "@/hooks/useGetAdminProfile";
 
 type PersonalInfoForm = {
   fullName: string;
@@ -22,11 +23,14 @@ type PasswordForm = {
 };
 
 export default function Settings() {
+  const { data: admin } = useGetAdmin();
   const { mutate, isPending } = useUpdateAdminProfile();
   const { mutate: updatePassword, isPending: IsUpdatingPassword } =
     useUpdatePassword();
+
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [profileFile, setProfileFile] = useState<File | null>(null);
+
   const {
     register: registerInfo,
     handleSubmit: handleInfoSubmit,
@@ -52,6 +56,16 @@ export default function Settings() {
     },
   });
 
+  useEffect(() => {
+    if (admin) {
+      reset({
+        fullName: admin.fullName || "",
+        email: admin.email || "",
+      });
+      setProfileImage(admin.avatar?.url || null);
+    }
+  }, [admin, reset]);
+
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -65,9 +79,13 @@ export default function Settings() {
     if (data.fullName.trim() !== "") formData.append("fullName", data.fullName);
     if (data.email.trim() !== "") formData.append("email", data.email);
     if (profileFile) formData.append("avatar", profileFile);
+
     mutate(formData, {
       onSuccess: () => {
-        reset();
+        reset({
+          fullName: data.fullName,
+          email: data.email,
+        });
       },
     });
   };
@@ -235,6 +253,7 @@ export default function Settings() {
               )}
             </div>
           </div>
+
           <div className="flex w-full justify-end">
             <Button
               type="submit"
@@ -244,7 +263,7 @@ export default function Settings() {
               {IsUpdatingPassword && (
                 <Loader2 className="h-4 w-4 animate-spin text-white" />
               )}
-              {isPending ? "Updating..." : "Update Password"}
+              {IsUpdatingPassword ? "Updating..." : "Update Password"}
             </Button>
           </div>
         </form>

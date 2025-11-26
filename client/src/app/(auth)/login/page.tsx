@@ -44,7 +44,7 @@ export default function LoginPage() {
           <div className="text-center">
             <h1 className="text-3xl font-bold lg:text-4xl">
               Welcome back to <br />
-              <span className="text-primary">GYM-FITNESS</span>
+              <span className="text-primary">BROTHERS-GYM</span>
             </h1>
             <p className="text-muted-foreground text-sm">
               Login to your account
