@@ -207,7 +207,6 @@ export const getDashboardStats = catchAsync(async (req, res, next) => {
   });
 });
 export const getMembers = catchAsync(async (req, res, next) => {
-  console.log("Fetching members with query:", req.query);
   // Base query
   let query = Member.find();
 
@@ -250,7 +249,6 @@ export const getMemebr = catchAsync(async (req, res, next) => {
 });
 
 export const getMemebrDetails = catchAsync(async (req, res, next) => {
-  console.log("Fetching member details for code:", req.params.memberCode);
   const { memberCode } = req.params;
   const member = await Member.findOne({ memberCode });
   if (!member) {
@@ -264,7 +262,6 @@ export const getMemebrDetails = catchAsync(async (req, res, next) => {
 
 // controller
 export const verifyMemberByCode = catchAsync(async (req, res, next) => {
-  console.log("Verifying member with code:", req.params.memberCode);
   const { memberCode } = req.params;
   const member = await Member.findOne({ memberCode }).select(
     "+membership.status"
@@ -374,7 +371,6 @@ export const updateMember = catchAsync(async (req, res, next) => {
 export const renewMembership = catchAsync(async (req, res, next) => {
   const { memberId } = req.params;
   const { months, amount, method } = req.body;
-  console.log(months, amount, method);
   if (!months || months <= 0)
     return next(new AppError("Please provide valid months.", 400));
   if (!amount || amount <= 0)

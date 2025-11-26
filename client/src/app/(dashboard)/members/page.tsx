@@ -34,7 +34,6 @@ async function MemeberListContent({
   status?: string;
   q?: string;
 }) {
-  console.log("Fetching members with params:", { range, status, page, q });
   const { data, total } = await getMembers({
     searchParams: { range, status, page, q },
   });

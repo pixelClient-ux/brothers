@@ -9,7 +9,6 @@ interface VerifyResponse {
 export async function verifyMember(
   memberCode: string,
 ): Promise<VerifyResponse | null> {
-  console.log("Client: Verifying member with code:", memberCode);
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/members/verify/${memberCode}`,

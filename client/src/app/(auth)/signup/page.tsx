@@ -29,9 +29,7 @@ export default function SignUpPage() {
 
   const password = useWatch({ control, name: "password" });
 
-  const onSubmit = (data: SignupForm) => {
-    console.log("Form submitted:", data);
-  };
+  const onSubmit = (data: SignupForm) => {};
 
   return (
     <div className="mx-auto flex h-[90vh] w-full max-w-7xl items-center px-4 py-10 md:gap-10 lg:px-12">

@@ -1,5 +1,4 @@
 export const createMember = async (memberData: FormData) => {
-  console.log(memberData);
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/members/create`,
     {

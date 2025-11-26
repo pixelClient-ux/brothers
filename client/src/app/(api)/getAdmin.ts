@@ -15,6 +15,5 @@ export default async function getAdmin() {
     throw new Error(errorData.message || "Failed to fetch admin data");
   }
   const result = await res.json();
-  console.log("Admin Data:", result);
   return result.data.admin as AdminType;
 }

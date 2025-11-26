@@ -43,8 +43,6 @@ export const getMembers = async ({
     query.append("range", searchParams.range);
   }
 
-  console.log(query);
-
   const url = `${process.env.NEXT_PUBLIC_API_URL}/members?${query.toString()}`;
 
   const response = await fetch(url, {
