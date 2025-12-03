@@ -31,7 +31,9 @@ app.use(express.static(publicDir));
 app.use("/api/v1/members", memberRouter);
 app.use("/api/v1/admins", adminRouter);
 app.use("/api/v1/reports", reportRouter);
-
+app.get("/", (req, res) => {
+  res.json({ message: "Brothers Gym API is running successfully! 🎉" });
+});
 app.all("/{*any}", (req, res, next) => {
   res.status(404).json({
     status: "fail",
