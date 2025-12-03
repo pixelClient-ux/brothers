@@ -43,8 +43,8 @@ const createSendToken = (
 
   res.cookie("jwt", token, {
     httpOnly: true,
-    secure: true, // Now valid because HTTPS
-    sameSite: "none", // Allows cross-site (e.g. frontend on port 3000, API on 3001)
+    secure: true,
+    sameSite: "none",
     path: "/",
     maxAge: 86400000,
   });
@@ -78,21 +78,19 @@ export const signUp = catchAsync(async (req, res, next) => {
     html: welcomeEmailTemplate(admin.fullName, "GYM Fitness"),
   });
 });
-
 export const login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
+
   if (!email || !password) {
-    return next(new AppError("Please provided email and password", 400));
+    return next(new AppError("Please provide email and password", 400));
   }
 
   const admin = await Admin.findOne({ email }).select("+password");
-  if (!admin) {
-    return next(new AppError("admin is not found", 400));
-  }
-  const isMatch = await admin.comparePassword(password, admin.password);
-  if (!isMatch) {
+
+  if (!admin || !(await admin.comparePassword(password, admin.password))) {
     return next(new AppError("Invalid email or password", 401));
   }
+
   createSendToken(admin, 200, res, "Logged in successfully!");
 });
 
@@ -111,7 +109,7 @@ export const logout = catchAsync(async (req, res, next) => {
 
 export const VerifyAdmin = (...allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const admin = req.admin; // set by protect()
+    const admin = req.admin;
 
     if (!admin) {
       return next(new AppError("admin not authenticated", 401));

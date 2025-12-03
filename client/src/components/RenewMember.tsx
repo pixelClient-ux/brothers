@@ -109,7 +109,7 @@ export default function RenewMembership({
 
         <div className="mt-2 flex items-center gap-3 rounded-md bg-gray-800/40 p-3">
           <Image
-            src={member.avatar}
+            src={member.avatar || "/images/profile.png"}
             alt={member.fullName}
             width={48}
             height={48}
