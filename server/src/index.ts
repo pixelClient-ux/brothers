@@ -15,7 +15,7 @@ app.set("trust proxy", 1);
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "https://brothers-1.onrender.com/",
+    origin: "https://brothers-1.onrender.com",
     credentials: true,
   })
 );
