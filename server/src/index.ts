@@ -15,7 +15,7 @@ app.set("trust proxy", 1);
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "https://brothers-tlcn.vercel.app",
+    origin: "https://brothers-1.onrender.com/",
     credentials: true,
   })
 );
