@@ -12,7 +12,8 @@ export default function useLogin() {
   const router = useRouter();
   const { mutate, isPending } = useMutation({
     mutationFn: (data: loginType) => login(data),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log(data);
       router.push("/");
     },
     onError: (error) => {
