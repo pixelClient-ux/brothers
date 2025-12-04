@@ -45,6 +45,7 @@ const createSendToken = (
     httpOnly: true,
     secure: true,
     sameSite: "none",
+    domain: "onrender.com",
     path: "/",
     maxAge: 86400000,
   });
