@@ -28,15 +28,15 @@ router
   .post("/reset-password/:token", resetPassword);
 router.use(protect, VerifyAdmin("admin"));
 router.get("/", getAdminProfile);
-// router
-//   .post("/update-password", updatePassword)
-//   .post("/logout", logout)
-//   .post("/confirm-email/:token", confirmEmailChange)
-//   .patch(
-//     "/update-profile",
-//     upload.single("avatar"),
-//     resizeMemberAvatar,
-//     updateProfile
-//   );
+router
+  .post("/update-password", updatePassword)
+  .post("/logout", logout)
+  .post("/confirm-email/:token", confirmEmailChange)
+  .patch(
+    "/update-profile",
+    upload.single("avatar"),
+    resizeMemberAvatar,
+    updateProfile
+  );
 
 export default router;

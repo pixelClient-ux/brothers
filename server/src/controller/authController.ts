@@ -45,7 +45,7 @@ const createSendToken = (
     httpOnly: true,
     secure: true,
     sameSite: "none",
-    domain: "brothers-tlcn.vercel.app",
+    domain: "brothers-qcfb.vercel.app",
     path: "/",
     maxAge: 86400000,
   });
