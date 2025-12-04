@@ -22,8 +22,8 @@ import {
 const router = express.Router();
 router.post("/signup", signUp);
 
+router.post("/login", login);
 router
-  .post("/login", login)
   .post("/forget-password", forgetPassword)
   .post("/reset-password/:token", resetPassword);
 router.use(protect, VerifyAdmin("admin"));
