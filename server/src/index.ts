@@ -14,7 +14,7 @@ const app = express();
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "https://brothers-tlcn.vercel.app/",
+    origin: "https://brothers-tlcn.vercel.app",
     credentials: true,
   })
 );
