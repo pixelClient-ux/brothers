@@ -45,7 +45,6 @@ const createSendToken = (
     httpOnly: true,
     secure: true,
     sameSite: "none",
-    domain: ".vercel.app",
     path: "/",
     maxAge: 86400000,
   });
