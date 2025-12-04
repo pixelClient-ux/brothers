@@ -1,5 +1,3 @@
-"use client";
-
 import login from "@/app/(api)/login";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -12,8 +10,7 @@ export default function useLogin() {
   const router = useRouter();
   const { mutate, isPending } = useMutation({
     mutationFn: (data: loginType) => login(data),
-    onSuccess: (data) => {
-      console.log(data);
+    onSuccess: () => {
       router.push("/");
     },
     onError: (error) => {
