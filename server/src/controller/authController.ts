@@ -45,7 +45,6 @@ const createSendToken = (
     httpOnly: true,
     secure: true,
     sameSite: "none",
-    domain: "brothers-1.onrender.com",
     path: "/",
     maxAge: 86400000,
   });
@@ -54,7 +53,6 @@ const createSendToken = (
 
   res.status(statusCode).json({
     status: "success",
-
     message,
   });
 };
