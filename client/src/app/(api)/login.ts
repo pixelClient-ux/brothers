@@ -17,7 +17,7 @@ export default async function login(data: loginType) {
     const errorData = await response.json();
     throw new Error(errorData.message || "Somethin went wrong,please try agin");
   }
-
+  window.location.href = "/";
   const result = await response.json();
 
   return result.message;
